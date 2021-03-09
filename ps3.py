@@ -92,18 +92,19 @@ def get_word_score(word, n):
     returns: int >= 0
     """
     wordvalue = word.lower()
-    value = 0
+    score = 0
+    letter_score = 0
     for c in wordvalue:
-        c = SCRABBLE_LETTER_VALUES[c]
-        value = value + c
-    print((7 * len(word)) - (3*(n-len(word))))
-    if (7 * len(word) - 3*(n-len(word))) > 1:
-        value = value * (7 * len(word) - 3*(n-len(word)))
-        return(value)
-    elif 1 > (7 * len(word) - 3*(n-len(word))):
-        return(value)
+        print(c)
+        letter_score = letter_score + SCRABBLE_LETTER_VALUES[c]
+    if (7*len(wordvalue)-3 * (n-len(wordvalue))) > 1:
+        score = (7*len(wordvalue)-3 * (n-len(wordvalue)))
+    else:
+        score = 1
+    return(letter_score * score)
+        
     
-#print(get_word_score('It', 7))
+#et_word_score('jar', 7)
 
 
 #test_get_word_score()
@@ -186,27 +187,22 @@ def update_hand(hand, word):
         if l < 0:
             l = 0
     for c in word.lower():
-        if c not in hand and '*' not in hand:
-            return hand
         if c in hand.keys():
-            if hand[c] > 0:
+            if hand.get(c,0) > 0:
                 temp_hand[c] = temp_hand[c] - 1
                 new_hand[c] = temp_hand[c]   
             else:
                 new_hand[c] = 0
         else:
-            new_hand[c] = hand[c]
-    for k in new_hand.copy():
-        if new_hand[k] <= 0:
-            del new_hand[k]
-    return(new_hand)
+            new_hand[c] = hand.get(c,0)
+    for l in new_hand.copy():
+        if new_hand[l] <= 0:
+            del new_hand[l]
     return(new_hand)
 
 #update_hand(C, 'quail')
 
-
-
-print(update_hand({'a':1,'p':2,'l':2,'e':1}, 'apez'))
+#print(update_hand({'a':1, 'q':1, 'l':2, 'm':1, 'u':1, 'i':1}, 'mix'))
 
 # ('e','u','i','o','a')
 # Problem #3: Test word validity
@@ -239,71 +235,8 @@ def is_valid_word(word, hand, word_list):
 
 
 
-print(is_valid_word('big', {'a':0, 'q':1, 'l':2, 'm':1, 'u':0, 'i':1, '*':2}, load_words()))
+#print(is_valid_word('m*ll', {'a':1, 'q':1, 'l':2, 'm':1, 'u':1, 'i':1, '*':1}, load_words()))
 
-
-
-def test_wildcard(word_list):
-    """
-    Unit test for is_valid_word
-    """
-    failure=False
-
-    # test 1
-    hand = {'a': 1, 'r': 1, 'e': 1, 'j': 2, 'm': 1, '*': 1}
-    word = "e*m"
-
-    if is_valid_word(word, hand, word_list):
-        print("FAILURE: test_is_valid_word() with wildcards")
-        print("\tExpected False, but got True for word: '" + word + "' and hand:", hand)
-
-        failure = True
-
-    # test 2
-    hand = {'n': 1, 'h': 1, '*': 1, 'y': 1, 'd':1, 'w':1, 'e': 2}
-    word = "honey"
-
-    if is_valid_word(word, hand, word_list):
-        print("FAILURE: test_is_valid_word() with wildcards")
-        print("\tExpected False, but got True for word: '"+ word +"' and hand:", hand)
-
-        failure = True
-
-    # test 3
-    hand = {'n': 1, 'h': 1, '*': 1, 'y': 1, 'd':1, 'w':1, 'e': 2}
-    word = "h*ney"
-
-    if not is_valid_word(word, hand, word_list):
-        print("FAILURE: test_is_valid_word() with wildcards")
-        print("\tExpected True, but got False for word: '"+ word +"' and hand:", hand)
-
-        failure = True
-
-    # test 4
-    hand = {'c': 1, 'o': 1, '*': 1, 'w': 1, 's':1, 'z':1, 'y': 2}
-    word = "c*wz"
-
-    if is_valid_word(word, hand, word_list):
-        print("FAILURE: test_is_valid_word() with wildcards")
-        print("\tExpected False, but got True for word: '"+ word +"' and hand:", hand)
-
-        failure = True    
-
-    # dictionary of words and scores WITH wildcards
-    words = {("h*ney", 7):290, ("c*ws", 6):176, ("wa*ls", 7):203}
-    for (word, n) in words.keys():
-        score = get_word_score(word, n)
-        if score != words[(word, n)]:
-            print("FAILURE: test_get_word_score() with wildcards")
-            print("\tExpected", words[(word, n)], "points but got '" + \
-                  str(score) + "' for word '" + word + "', n=" + str(n))
-            failure=True      
-
-    if not failure:
-        print("SUCCESS: test_wildcard()")
-
-
-test_wildcard(load_words())
 
 
 
@@ -354,21 +287,24 @@ def play_hand(hand, word_list):
     """
     score = 0
     while hand != {}:
+        old_hand = dict(hand)
         display_hand(hand)
-        word = input('enter a word')
+        word = input('enter a word: ')
+        valid = is_valid_word(word, hand, word_list)
         if word != '!!':
             hand = update_hand(hand, word)
-        if word in word_list and is_valid_word(word, hand, word_list) == True:
-            score = score + get_word_score(word, len(hand))
+        if valid:
+            score = score + get_word_score(word, len(old_hand))
             print('score:', score)
-        elif word != '!!':
+        if word != '!!' and valid != 1:
             print('invalid word. Please choose another')
-        if word == '!!' or sum(hand.values()) == 0:
-            print('score', score)
+        if word == '!!':
             return(score)
-    
+        if sum(hand.values()) == 0:
+            print('ran out of letters')
+            return(score)
         
-#play_hand({'a':1, 'q':1, 'l':2, 'm':1, 'u':1, 'i':1}, load_words())        
+play_hand({'a':1, 'c':1, 'f':1, 'i':1, 't':1, 'x':1, '*':1}, load_words())        
     
 #play_hand({'a':1,'p':2,'l':2,'e':1}, load_words())    
     # BEGIN PSEUDOCODE <-- Remove this comment when you implement this function
