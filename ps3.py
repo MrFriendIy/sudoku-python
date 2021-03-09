@@ -16,7 +16,7 @@ CONSONANTS = 'bcdfghjklmnpqrstvwxyz'
 HAND_SIZE = 7
 
 SCRABBLE_LETTER_VALUES = {
-    'a': 1, 'b': 3, 'c': 3, 'd': 2, 'e': 1, 'f': 4, 'g': 2, 'h': 4, 'i': 1, 'j': 8, 'k': 5, 'l': 1, 'm': 3, 'n': 1, 'o': 1, 'p': 3, 'q': 10, 'r': 1, 's': 1, 't': 1, 'u': 1, 'v': 4, 'w': 4, 'x': 8, 'y': 4, 'z': 10
+    'a': 1, 'b': 3, 'c': 3, 'd': 2, 'e': 1, 'f': 4, 'g': 2, 'h': 4, 'i': 1, 'j': 8, 'k': 5, 'l': 1, 'm': 3, 'n': 1, 'o': 1, 'p': 3, 'q': 10, 'r': 1, 's': 1, 't': 1, 'u': 1, 'v': 4, 'w': 4, 'x': 8, 'y': 4, 'z': 10, '*':0
 }
 
 # -----------------------------------
@@ -91,26 +91,22 @@ def get_word_score(word, n):
     n: int >= 0
     returns: int >= 0
     """
-    wordvalue = word
+    wordvalue = word.lower()
     value = 0
     for c in wordvalue:
         c = SCRABBLE_LETTER_VALUES[c]
         value = value + c
-    print(7 * len(word))
-    print(3*(n-len(word)))
-    if 7 * len(word) > 1 and 7 * len(word) > 3*(n-len(word)):
-        value = value * 7 * len(word)
+    print((7 * len(word)) - (3*(n-len(word))))
+    if (7 * len(word) - 3*(n-len(word))) > 1:
+        value = value * (7 * len(word) - 3*(n-len(word)))
         return(value)
-    elif 3*(n-len(word)) > 1 and 3*(n-len(word)) > 7 * len(word):
-        value = value * 3*(n-len(word))
-        return(value)
-    elif 1 > 3*(n-len(word)) and 1 > 7 * len(word):
+    elif 1 > (7 * len(word) - 3*(n-len(word))):
         return(value)
     
-#print(get_word_score('apple', 25))
-        
+#print(get_word_score('It', 7))
 
-#
+
+#test_get_word_score()
 # Make sure you understand how this function works and what it does!
 #
 def display_hand(hand):
@@ -149,8 +145,8 @@ def deal_hand(n):
     returns: dictionary (string -> int)
     """
     
-    hand={}
-    num_vowels = int(math.ceil(n / 3))
+    hand={'*'}
+    num_vowels = int(math.ceil(n / 2))
 
     for i in range(num_vowels):
         x = random.choice(VOWELS)
@@ -183,24 +179,36 @@ def update_hand(hand, word):
     hand: dictionary (string -> int)    
     returns: dictionary (string -> int)
     """
-    temp_hand = hand.copy()
-    new_hand = hand.copy()
-    for c in word:
+    temp_hand = dict(hand)
+    new_hand = dict(hand)
+    print(hand)
+    for l in hand.values():
+        if l < 0:
+            l = 0
+    for c in word.lower():
+        if c not in hand and '*' not in hand:
+            return hand
         if c in hand.keys():
-            if hand.get(c,0) > 0:
+            if hand[c] > 0:
                 temp_hand[c] = temp_hand[c] - 1
-                new_hand[c] = temp_hand[c] 
+                new_hand[c] = temp_hand[c]   
             else:
                 new_hand[c] = 0
         else:
-            new_hand[c] = hand.get(c,0)
+            new_hand[c] = hand[c]
     for k in new_hand.copy():
         if new_hand[k] <= 0:
             del new_hand[k]
     return(new_hand)
+    return(new_hand)
+
+#update_hand(C, 'quail')
+
+
 
 print(update_hand({'a':1,'p':2,'l':2,'e':1}, 'apez'))
-#
+
+# ('e','u','i','o','a')
 # Problem #3: Test word validity
 #
 def is_valid_word(word, hand, word_list):
@@ -214,12 +222,93 @@ def is_valid_word(word, hand, word_list):
     word_list: list of lowercase strings
     returns: boolean
     """
-
+    vowels = ('e','u','i','o','a')
+    truth = 0
     for c in word:
        if c in hand and word in word_list:
+           truth = truth + 1
+       if truth == len(word):
            return(True)
+       elif c == '*':
+           for l in vowels:
+               if word.replace('*', l) in word_list:
+                   return(True)
+               
 
-#
+           
+
+
+
+print(is_valid_word('big', {'a':0, 'q':1, 'l':2, 'm':1, 'u':0, 'i':1, '*':2}, load_words()))
+
+
+
+def test_wildcard(word_list):
+    """
+    Unit test for is_valid_word
+    """
+    failure=False
+
+    # test 1
+    hand = {'a': 1, 'r': 1, 'e': 1, 'j': 2, 'm': 1, '*': 1}
+    word = "e*m"
+
+    if is_valid_word(word, hand, word_list):
+        print("FAILURE: test_is_valid_word() with wildcards")
+        print("\tExpected False, but got True for word: '" + word + "' and hand:", hand)
+
+        failure = True
+
+    # test 2
+    hand = {'n': 1, 'h': 1, '*': 1, 'y': 1, 'd':1, 'w':1, 'e': 2}
+    word = "honey"
+
+    if is_valid_word(word, hand, word_list):
+        print("FAILURE: test_is_valid_word() with wildcards")
+        print("\tExpected False, but got True for word: '"+ word +"' and hand:", hand)
+
+        failure = True
+
+    # test 3
+    hand = {'n': 1, 'h': 1, '*': 1, 'y': 1, 'd':1, 'w':1, 'e': 2}
+    word = "h*ney"
+
+    if not is_valid_word(word, hand, word_list):
+        print("FAILURE: test_is_valid_word() with wildcards")
+        print("\tExpected True, but got False for word: '"+ word +"' and hand:", hand)
+
+        failure = True
+
+    # test 4
+    hand = {'c': 1, 'o': 1, '*': 1, 'w': 1, 's':1, 'z':1, 'y': 2}
+    word = "c*wz"
+
+    if is_valid_word(word, hand, word_list):
+        print("FAILURE: test_is_valid_word() with wildcards")
+        print("\tExpected False, but got True for word: '"+ word +"' and hand:", hand)
+
+        failure = True    
+
+    # dictionary of words and scores WITH wildcards
+    words = {("h*ney", 7):290, ("c*ws", 6):176, ("wa*ls", 7):203}
+    for (word, n) in words.keys():
+        score = get_word_score(word, n)
+        if score != words[(word, n)]:
+            print("FAILURE: test_get_word_score() with wildcards")
+            print("\tExpected", words[(word, n)], "points but got '" + \
+                  str(score) + "' for word '" + word + "', n=" + str(n))
+            failure=True      
+
+    if not failure:
+        print("SUCCESS: test_wildcard()")
+
+
+test_wildcard(load_words())
+
+
+
+
+
 # Problem #5: Playing a hand
 #
 def calculate_handlen(hand):
@@ -279,7 +368,7 @@ def play_hand(hand, word_list):
             return(score)
     
         
-        
+#play_hand({'a':1, 'q':1, 'l':2, 'm':1, 'u':1, 'i':1}, load_words())        
     
 #play_hand({'a':1,'p':2,'l':2,'e':1}, load_words())    
     # BEGIN PSEUDOCODE <-- Remove this comment when you implement this function
@@ -324,6 +413,18 @@ def play_hand(hand, word_list):
 #
 # procedure you will use to substitute a letter in a hand
 #
+
+
+
+
+
+
+
+
+
+
+
+
 
 def substitute_hand(hand, letter):
     """ 
