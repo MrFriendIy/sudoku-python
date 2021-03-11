@@ -390,15 +390,15 @@ def substitute_hand(hand, letter):
     hand_copy = dict(hand)
     i = 0
     if letter in hand:
-        del hand[letter]
+        del hand_copy[letter]
     new_letter = random.choice(alphabet)
-    while new_letter in hand_copy:
+    while new_letter in hand:
         new_letter = random.choice(alphabet)
-    hand[new_letter] = 0
-    while i < hand_copy[letter]:
+    hand_copy[new_letter] = 0
+    while i < hand[letter]:
         i += 1
-        hand[new_letter] = hand[new_letter] + 1
-    return(hand)
+        hand_copy[new_letter] = hand_copy[new_letter] + 1
+    return(hand_copy)
             
     
     
@@ -435,6 +435,7 @@ def play_game(word_list):
 
     word_list: list of lowercase strings
     """
+
     hand_number = int(input('enter total number of hands: '))
     i = 0
     games = 0
