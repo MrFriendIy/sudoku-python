@@ -290,7 +290,7 @@ def play_hand(hand, word_list):
         old_hand = dict(hand)
         print('current hand: ')
         display_hand(hand)
-        word = input('enter word, or "!!" to indicate that you are finished: ')
+        word = input('enter word, or "!!" to indicate that you are done: ')
         valid = is_valid_word(word, hand, word_list)
         if word != '!!':
             hand = update_hand(hand, word)
@@ -300,6 +300,7 @@ def play_hand(hand, word_list):
         if word != '!!' and valid != 1:
             print('invalid word. Please choose another')
         if word == '!!':
+            print('total score for this hand:', score)
             return(score)
         if sum(hand.values()) == 0:
             print('ran out of letters')
@@ -443,19 +444,24 @@ def play_game(word_list):
     for i in range(hand_number):
         hand = deal_hand(HAND_SIZE)
         new_hand = dict(hand)
-        print('current hand: ', display_hand(hand))
+        print('current hand: ', end='')
+        display_hand(new_hand)
         if can_sub:    
             if input('would you like to substitute a letter? ') == 'yes':
                 new_hand = substitute_hand(new_hand, input('Which letter would you like to replace: '))
                 can_sub = False
         game_score = play_hand(new_hand, word_list)
-        if can_replay():
+        if can_replay:
             replay = input('would you like to replay the hand? ')
             if replay == 'yes':
                 new_hand = hand
-                game_score = play_hand(new_hand, word_list)
+                new_game_score = play_hand(new_hand, word_list)
+                can_replay = False
+                if new_game_score > game_score:
+                    game_score = new_game_score
         total_score = total_score + game_score
-        
+    print('Total score over all hands: ', total_score )
+    return(total_score)
 
    
     
