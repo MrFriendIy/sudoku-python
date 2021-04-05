@@ -17,14 +17,14 @@ def load_words(file_name):
     Depending on the size of the word list, this function may
     take a while to finish.
     '''
-    print("Loading word list from file...")
+   # print("Loading word list from file...")
     # inFile: file
     inFile = open(file_name, 'r')
     # wordlist: list of strings
     wordlist = []
     for line in inFile:
         wordlist.extend([word.lower() for word in line.split(' ')])
-    print("  ", len(wordlist), "words loaded.")
+    #print("  ", len(wordlist), "words loaded.")
     return wordlist
 
 def is_word(word_list, word):
@@ -106,7 +106,7 @@ class Message(object):
         Returns: a dictionary mapping a letter (string) to 
                  another letter (string). 
         '''
-        encoded = {' ':' ', '.':'.', '!':'!', ',':',', '"':'"', "'":"'", '?':'?', ':':':', ';':';'}
+        encoded = {}
         for c in string.ascii_lowercase:
             encoded[c] = string.ascii_lowercase[((shift + string.ascii_lowercase.find(c))%26)]
         for b in string.ascii_uppercase:
@@ -127,7 +127,10 @@ class Message(object):
         encoded = self.build_shift_dict(shift)
         new_message = ""
         for c in self.message_text:
-            new_message += encoded[c]
+            if c in string.ascii_letters :
+                new_message += encoded[c]
+            else:
+                new_message += c
         return(new_message)
             
 
@@ -219,62 +222,47 @@ class CiphertextMessage(Message):
         Returns: a tuple of the best shift value used to decrypt the message
         and the decrypted message text using that shift value
         '''
-        number_valid = [-1, 0]
-        _text = self.get_message_text()
-        text_list = re.split('\s+', _text)
-        decoded_text = ''
-        shift_value = -1
-        valid_words = load_words('words.txt')
-        for i in range(26):
-            i += 1
-            shift_value = i
-            for w in text_list:
-                encoded = self.build_shift_dict(shift_value)
-                for c in w:
-                    decoded_text += encoded[c]
-                decoded_text += ' '
-            decoded_text += 'ʬ'
-        decoded_text = decoded_text.split('ʬ')
-        for ch in decoded_text:
-            decoded_text[decoded_text.index(ch)] = ch[:-1]
-        for l in decoded_text:
-            decoded_text[decoded_text.index(l)] = l.split(' ')
-        for ls in decoded_text:
-            tmp_val = 0
-            for wo in ls:
-                if wo.lower() in valid_words:
-                    tmp_val += 1
-            if tmp_val > number_valid[0]:
-                number_valid = [tmp_val, decoded_text.index(ls)]
-        return((25 - number_valid[1], ' '.join(decoded_text[number_valid[1]])))
+        
+        # loop all following instructions 26 times, incrementing the shift value by one each time
+        number_valid = -1
+        best_shift = 0
+        for shift_value in range(26):            
+        # apply shift on the message with the given shift value
+            decoded_text = self.apply_shift(shift_value)
+        # check the number of valid words in the newly shifted message
+            decoded_list = re.split('\s+', decoded_text)
+            valid_counter = 0
+            for wd in decoded_list:
+                if is_word(self.valid_words, wd):
+                    valid_counter += 1
+        # if the number of valid words is higher than the recorded highest, replace the record with the new number of words and the shift value
+            if valid_counter > number_valid:
+                number_valid = valid_counter
+                best_shift = shift_value 
+        # return a tuple of the recorded shift value and the message shifted by that much
+        return(best_shift, self.apply_shift(best_shift))
+        
 if __name__ == '__main__':
 
+    
 #    #Example test case (PlaintextMessage)
 #    plaintext = PlaintextMessage('hello', 2)
 #    print('Expected Output: jgnnq')
 #    print('Actual Output:', plaintext.get_message_text_encrypted())
 #
 #    #Example test case (CiphertextMessage)
-#    ciphertext = CiphertextMessage('jgnnq')
-#    print('Expected Output:', (24, 'hello'))
-#    print('Actual Output:', ciphertext.decrypt_message())
+    ciphertext = CiphertextMessage('jgnnq')
+    print('Expected Output:', (24, 'hello'))
+    print('Actual Output:', ciphertext.decrypt_message())
 
     #TODO: WRITE YOUR TEST CASES HERE
 
     #TODO: best shift value and unencrypted story 
-    
     plaintext = PlaintextMessage('hellow world', 6)
     print('Expect Output:', 'nkrruc cuxrj')
     print('Actual Output:', plaintext.get_message_text_encrypted())
     plaintext2 = PlaintextMessage('Capital TEST', 12)
     print('Expect Output:', 'Ombufmx FQEF')
-    print('Actual Output:', plaintext2.get_message_text_encrypted())    
-    
-    ciphertext = CiphertextMessage('nkrruc cuxrj')
-    print('Expect Output:', 6, 'hellow world')
-    print('Actual Output:', ciphertext.decrypt_message())
-    ciphertext2 = CiphertextMessage('Ombufmx FQEF')
-    print('Expect Output:', 12, 'Capital TEST')
-    print('Actual Output:', ciphertext2.decrypt_message())
+    print('Actual Output:', plaintext2.get_message_text_encrypted())     
     story = CiphertextMessage('Xoqy Tzcfsm wg o amhvwqoz qvofoqhsf qfsohsr cb hvs gdif ct o acasbh hc vszd qcjsf ob wbgittwqwsbhzm dzobbsr voqy. Vs vog pssb fsuwghsfsr tcf qzoggsg oh AWH hkwqs pstcfs, pih vog fsdcfhsrzm bsjsf doggsr oqzogg. Wh vog pssb hvs hforwhwcb ct hvs fsgwrsbhg ct Sogh Qoadig hc psqcas Xoqy Tzcfsm tcf o tsk bwuvhg soqv msof hc sriqohs wbqcawbu ghirsbhg wb hvs komg, asobg, obr shvwqg ct voqywbu.')
     print('Decoded Story:', story.decrypt_message())
