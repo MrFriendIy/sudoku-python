@@ -182,7 +182,30 @@ class EncryptedSubMessage(SubMessage):
         
         Hint: use your function from Part 4A
         '''
-        # 
+        # first, put all the vowels in a dictionary, with the keys being their position in the message
+        text = self.get_message_text()
+        count = 0
+        vowels_dict = {}
+        for c in text:
+            if c in VOWELS_LOWER or c in VOWELS_UPPER:
+                vowels_dict[count] = c
+            count += 1
+                
+        
+        # create a string of all the vowels, and then get the permutations of that string
+        vowels_str = str(vowels_dict.key())
+        print(vowels_str)
+        
+        # loop over the characters in each of the permutations, replacing the vowels in the origional message
+        
+        
+        # determine the number of correct words for each permutation
+        
+        
+        # if that number is greater than the recorded amount, then record the new amount of correct words and the permutation
+        
+        
+        # after working through all permutations, return the message with the best permutation
     
 
 if __name__ == '__main__':
