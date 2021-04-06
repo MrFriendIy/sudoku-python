@@ -1,11 +1,11 @@
 # Problem Set 4C
-# Name: <your name here>
+# Name: Matthew Vogel
 # Collaborators:
 # Time Spent: x:xx
 
 import string
 from ps4a import get_permutations
-import random
+import re
 
 ### HELPER CODE ###
 def load_words(file_name):
@@ -19,14 +19,14 @@ def load_words(file_name):
     take a while to finish.
     '''
     
-    print("Loading word list from file...")
+    #print("Loading word list from file...")
     # inFile: file
     inFile = open(file_name, 'r')
     # wordlist: list of strings
     wordlist = []
     for line in inFile:
         wordlist.extend([word.lower() for word in line.split(' ')])
-    print("  ", len(wordlist), "words loaded.")
+    #print("  ", len(wordlist), "words loaded.")
     return wordlist
 
 def is_word(word_list, word):
@@ -113,7 +113,10 @@ class SubMessage(object):
         '''
         
         # create a dictionary of all upper and lowercase letters, mapped to themselves
-        permuted_dict = {'a':'a','b':'b','c':'c','d':'d','e':'e','f':'f','g':'g','h':'h','i':'i','j':'j','k':'k','l':'l','m':'m','n':'n','o':'o','p':'p','q':'q','r':'r','s':'s','t':'t','u':'u','v':'v','w':'w','x':'x','y':'y','z':'z','A':'A','B':'B','C':'C','D':'D','E':'E','F':'F','G':'G','H':'H','I':'I','J':'J','K':'K','L':'L','M':'M','N':'N','O':'O','P':'P','Q':'Q','R':'R','S':'S','T':'T','U':'U','V':'V','W':'W','X':'X','Y':'Y','Z':'Z'}
+        permuted_dict = {}
+        all_letters = VOWELS_LOWER + VOWELS_UPPER + CONSONANTS_LOWER + CONSONANTS_UPPER
+        for l in all_letters:
+            permuted_dict[l] = l
         
         # itterate over vowels_lower, and map the first vowel (a) to the first item in vowels_permutations
         count = 0
@@ -182,37 +185,51 @@ class EncryptedSubMessage(SubMessage):
         
         Hint: use your function from Part 4A
         '''
-        # first, put all the vowels in a dictionary, with the keys being their position in the message
-        text = self.get_message_text()
-        count = 0
-        vowels_dict = {}
-        for c in text:
-            if c in VOWELS_LOWER or c in VOWELS_UPPER:
-                vowels_dict[count] = c
-            count += 1
-                
-        
-        # create a string of all the vowels, and then get the permutations of that string
-        vowels_str = str(vowels_dict.key())
-        print(vowels_str)
-        
-        # loop over the characters in each of the permutations, replacing the vowels in the origional message
-        
-        
-        # determine the number of correct words for each permutation
-        
-        
-        # if that number is greater than the recorded amount, then record the new amount of correct words and the permutation
-        
-        
-        # after working through all permutations, return the message with the best permutation
-    
 
+        
+        # get the permutations of all vowels
+        vowels_permuted = get_permutations(VOWELS_LOWER)
+
+        # build a transpose dictionary with these permutations
+        valid_words = self.get_valid_words()
+        greatest_valid = 0
+        greatest_permutation = 0
+        for perm in vowels_permuted:
+            transpose_dict = self.build_transpose_dict(perm)
+
+        # apply transpose on the origional message using these transpose dicts
+            new_message = self.apply_transpose(transpose_dict)
+
+        
+        # test each of these new messages to see how many words are valid
+            valid_count = 0 
+            new_message_list = re.split('\s+', new_message)
+            for w in new_message_list:
+                if is_word(valid_words, w):
+                    valid_count +=1
+        # if the number of valid words is greater than the p
+            if valid_count > greatest_valid:
+                greatest_valid = valid_count
+                greatest_permutation = perm
+        
+        # retrun the decrypted message with the best permutation
+        return(self.apply_transpose(self.build_transpose_dict(greatest_permutation)))
 if __name__ == '__main__':
 
     # Example test case
-    message = SubMessage("Hello World!")
-    permutation = "eaiuo"
+    # message = SubMessage("Hello World!")
+    # permutation = "eaiuo"
+    # enc_dict = message.build_transpose_dict(permutation)
+    # print("Original message:", message.get_message_text(), "Permutation:", permutation)
+    # print("Expected encryption:", "Hallu Wurld!")
+    # print("Actual encryption:", message.apply_transpose(enc_dict))
+    # enc_message = EncryptedSubMessage(message.apply_transpose(enc_dict))
+    # print("Decrypted message:", enc_message.decrypt_message())
+    
+     
+    #TODO: WRITE YOUR TEST CASES HERE
+    message = SubMessage('Hello World!')
+    permutation = 'eaiuo'
     enc_dict = message.build_transpose_dict(permutation)
     print("Original message:", message.get_message_text(), "Permutation:", permutation)
     print("Expected encryption:", "Hallu Wurld!")
@@ -220,5 +237,11 @@ if __name__ == '__main__':
     enc_message = EncryptedSubMessage(message.apply_transpose(enc_dict))
     print("Decrypted message:", enc_message.decrypt_message())
     
-     
-    #TODO: WRITE YOUR TEST CASES HERE
+    message2 = SubMessage('TesTING: CAPitol!  $  and. PUNNctuation')
+    permutation2 = 'ieuoa'
+    enc_dict2 = message2.build_transpose_dict(permutation2)
+    print("Original message:", message2.get_message_text(), "Permutation:", permutation2)
+    print('expected encryption:', 'TesTUNG: CIPutol!  $  ind. PANNctaituon')
+    print("Actual encryption:", message2.apply_transpose(enc_dict2))
+    enc_message2 = EncryptedSubMessage(message2.apply_transpose(enc_dict2))
+    print("Decrypted message:", enc_message2.decrypt_message())
