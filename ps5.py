@@ -106,39 +106,37 @@ class Trigger(object):
 class PhraseTrigger(Trigger):
 
     # this will take a string, phrase.
-    def __init__(self, phrase):
-        self.phrase = phrase
+    def __init__(self, trigger):
+        self.trigger = trigger
     # define getter methods
-    def get_phrase(self):
-        return(self.phrase)
+    def get_trigger(self):
+        return(self.trigger)
     # define the is_phrase_in method, which takes a string trigger
-    def is_phrase_in(self, trigger):
-        phrase_simple = self.get_phrase().lower()
-        for c in phrase_simple:
+    def is_phrase_in(self, text):
+        text_simple = text.lower()
+        for c in text_simple:
             if c in string.punctuation:
-                phrase_simple = phrase_simple.replace(c, '')
-        phrase_simple = ' '.join(phrase_simple.split())
+                text_simple = text_simple.replace(c, '')
+        text_simple = ' '.join(text_simple.split())
             
         # check to see if trigger is in phrase, ignoring capitalisation and punctuation
-        return(trigger in phrase_simple)
+        return(self.get_trigger() in text_simple)
 # Problem 3
 
 # first, define a class called title trigger that inherits the phrase trigger class and takes a news story object as an argument
 class TitleTrigger(PhraseTrigger):
-    def __init__(self, news_story):
-        self.news_story = news_story
+    def __init__(self, trigger):
+        self.trigger = trigger
     
     # getter methods
-    def get_news_story(self):
-        return(self.news_story)
-    # from the news story, get the title string 
-    def get_phrase(self):
-        return(self.news_story.get_title())
+    def get_trigger(self):
+        return(self.trigger)
         
     
     # use the is phrase in method to see if the trigger is in the title
-    def is_in_title(self, trigger):
-        return(self.is_phrase_in(trigger))
+    def is_in_title(self, news_story):
+        title = news_story.get_title()
+        return(self.is_phrase_in(title))
     
 
 # Problem 4
@@ -146,20 +144,18 @@ class TitleTrigger(PhraseTrigger):
 # this is identical to the title trigger class except it checks the description
 
 class DescriptionTrigger(PhraseTrigger):
-    def __init__(self, news_story):
-        self.news_story = news_story
+    def __init__(self, trigger):
+        self.trigger = trigger
     
     # getter methods
-    def get_news_story(self):
-        return(self.news_story)
-    # from the news story, get the description string 
-    def get_phrase(self):
-        return(self.news_story.get_description())
+    def get_trigger(self):
+        return(self.trigger)
         
     
     # use the is phrase in method to see if the trigger is in the description
-    def is_in_description(self, trigger):
-        return(self.is_phrase_in(trigger))
+    def is_in_description(self, news_story):
+        description = news_story.get_description()
+        return(self.is_phrase_in(description))
     
 
 # TIME TRIGGERS
