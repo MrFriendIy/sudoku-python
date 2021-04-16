@@ -185,10 +185,13 @@ class TimeTrigger(Trigger):
 # Problem 6
 # TODO: BeforeTrigger and AfterTrigger
 
-    # define a class called before trigger that takes a datetime and a 
+    # define a class called before trigger that takes a datetime  
     
     
-    #
+    # getter methods
+    
+    
+    # make a method which takes a news_story, and returns wetehr or not the pubdate is before the datetime
 
 # COMPOSITE TRIGGERS
 
