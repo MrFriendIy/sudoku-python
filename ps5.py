@@ -11,7 +11,7 @@ from project_util import translate_html
 from mtTkinter import *
 from datetime import datetime
 import pytz
-import datetime
+#import datetime
 import copy
 
 #-----------------------------------------------------------------------
@@ -76,12 +76,12 @@ class NewsStory(object):
         return(self.description)
     def get_link(self):
         return(self.link)
-    def get_pubDate(self):
+    def get_pubdate(self):
         return(self.pubDate)
 
     # create a str method that pronts everything sequentially.
     def __str__(self):
-        return('GUID: '+ self.get_guid()+ '\n'+ 'title: '+ self.get_title()+ '\n'+ 'description: '+ self.get_description()+ '\n'+ 'link: '+ self.get_link()+ '\n'+ 'publish date: '+ str(self.get_pubDate()))
+        return('GUID: '+ self.get_guid()+ '\n'+ 'title: '+ self.get_title()+ '\n'+ 'description: '+ self.get_description()+ '\n'+ 'link: '+ self.get_link()+ '\n'+ 'publish date: '+ str(self.get_pubdate()))
 
 
 #======================
@@ -116,11 +116,12 @@ class PhraseTrigger(Trigger):
         text_simple = text.lower()
         for c in text_simple:
             if c in string.punctuation:
-                text_simple = text_simple.replace(c, '')
+                text_simple = text_simple.replace(c, ' ')
         text_simple = ' '.join(text_simple.split())
             
         # check to see if trigger is in phrase, ignoring capitalisation and punctuation
-        return(self.get_trigger() in text_simple)
+        trigger = self.get_trigger().lower()
+        return(' '+trigger+' ' in ' '+text_simple+' ')
 # Problem 3
 
 # first, define a class called title trigger that inherits the phrase trigger class and takes a news story object as an argument
@@ -134,7 +135,7 @@ class TitleTrigger(PhraseTrigger):
         
     
     # use the is phrase in method to see if the trigger is in the title
-    def is_in_title(self, news_story):
+    def evaluate(self, news_story):
         title = news_story.get_title()
         return(self.is_phrase_in(title))
     
@@ -153,7 +154,7 @@ class DescriptionTrigger(PhraseTrigger):
         
     
     # use the is phrase in method to see if the trigger is in the description
-    def is_in_description(self, news_story):
+    def evaluate(self, news_story):
         description = news_story.get_description()
         return(self.is_phrase_in(description))
     
@@ -178,25 +179,50 @@ class TimeTrigger(Trigger):
     # convert the string into a datetime with the datetime.strptime method
     def convert_time(self):
         time_string = self.get_time_string()
-        time_datetime = datetime.datetime.strptime(time_string, '%d %b %Y %H:%M:%S')
+        time_datetime = datetime.strptime(time_string, '%d %b %Y %H:%M:%S')
     
     # set the datetime as an attribute
         self.time_datetime = time_datetime
+        return(time_datetime)
 # Problem 6
 # TODO: BeforeTrigger and AfterTrigger
 
-    # define a class called before trigger that takes a datetime  
-    
+ # define a class called before trigger that takes a trigger datetime  
+class BeforeTrigger(TimeTrigger):
+    def __init__(self, time_string):
+            self.time_string = time_string
     
     # getter methods
-    
+    def get_time_string(self):
+        return(self.time_string)
     
     # make a method which takes a news_story, and returns wetehr or not the pubdate is before the datetime
+    def evaluate(self, news_story):
+        return(news_story.get_pubdate() < self.convert_time())
+    
+
+# after trigger is identical to before trigger, but with the > changed to a <
+
+class AfterTrigger(TimeTrigger):
+    def __init__(self, time_string):
+            self.time_string = time_string
+    
+    # getter methods
+    def get_time_string(self):
+        return(self.time_string)
+    
+    # make a method which takes a news_story, and returns wetehr or not the pubdate is before the datetime
+    def evaluate(self, news_story):
+        return(news_story.get_pubdate() > self.convert_time())
+    
 
 # COMPOSITE TRIGGERS
 
 # Problem 7
 # TODO: NotTrigger
+
+
+
 
 # Problem 8
 # TODO: AndTrigger
