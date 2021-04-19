@@ -221,14 +221,62 @@ class AfterTrigger(TimeTrigger):
 # Problem 7
 # TODO: NotTrigger
 
+# define a class called not trigger which takes one argument, called class_trigger'
+class NotTrigger(Trigger):
+    def __init__(self, class_trigger):
+        self.class_trigger = class_trigger
 
+    # getter methods    
+    def get_class_trigger(self):
+        return(self.class_trigger)
 
+    # run the evaluate function on class trigger and return the opposite of what it returns
+    def evaluate(self, news_story):
+        class_trigger = self.get_class_trigger()
+        return(not class_trigger.evaluate(news_story))
 
 # Problem 8
 # TODO: AndTrigger
 
+# define a class and trigger which takes 2 arguments, trigger1 and 2
+class AndTrigger(Trigger):
+    def __init__(self, trigger1, trigger2):
+        self.trigger1 = trigger1
+        self.trigger2 = trigger2
+
+    # getter methods
+    def get_trigger1(self):
+        return(self.trigger1)
+    def get_trigger2(self):
+        return(self.trigger2)
+        
+    # run the evaluate function on both triggers and return them with an and operator
+    def evaluate(self, news_story):
+        trigger1 = self.trigger1
+        trigger2 = self.trigger2
+        return(trigger1.evaluate(news_story) and trigger2.evaluate(news_story))
+
 # Problem 9
 # TODO: OrTrigger
+
+# same as and but with or
+
+class OrTrigger(Trigger):
+    def __init__(self, trigger1, trigger2):
+        self.trigger1 = trigger1
+        self.trigger2 = trigger2
+
+    # getter methods
+    def get_trigger1(self):
+        return(self.trigger1)
+    def get_trigger2(self):
+        return(self.trigger2)
+        
+    # run the evaluate function on both triggers and return them with an and operator
+    def evaluate(self, news_story):
+        trigger1 = self.trigger1
+        trigger2 = self.trigger2
+        return(trigger1.evaluate(news_story) or trigger2.evaluate(news_story))
 
 
 #======================
@@ -245,10 +293,20 @@ def filter_stories(stories, triggerlist):
     # TODO: Problem 10
     # This is a placeholder
     # (we're just returning all the stories, with no filtering)
-    return stories
 
+    # make a for loop over all the triggers
+    filtered_stories = []
+    for t in triggerlist:
+        
+        # make another for loop which checks each of the stories to see if it fits the current trigger
+        for s in stories:
+            if t.evaluate(s):
 
-
+        # if it does, add it to a new list of filtered storues
+                filtered_stories.append(s)
+        
+    # return filtered stories
+    return(filtered_stories)
 #======================
 # User-Specified Triggers
 #======================
