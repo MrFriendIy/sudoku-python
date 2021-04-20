@@ -300,17 +300,13 @@ def filter_stories(stories, triggerlist):
         
         # make another for loop which checks each of the stories to see if it fits the current trigger
         for s in stories:
-            if t.evaluate(s):
+            if t.evaluate(s) and s not in filtered_stories:
 
         # if it does, add it to a new list of filtered storues
                 filtered_stories.append(s)
         
     # return filtered stories
-    filtered_stories_no_repeats = []
-    for i in filtered_stories:
-        if i not in filtered_stories_no_repeats:
-            filtered_stories_no_repeats.append(i)
-    return(filtered_stories_no_repeats)
+    return(filtered_stories)
 #======================
 # User-Specified Triggers
 #======================
