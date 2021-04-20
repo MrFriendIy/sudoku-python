@@ -252,8 +252,8 @@ class AndTrigger(Trigger):
         
     # run the evaluate function on both triggers and return them with an and operator
     def evaluate(self, news_story):
-        trigger1 = self.trigger1
-        trigger2 = self.trigger2
+        trigger1 = self.get_trigger1()
+        trigger2 = self.get_trigger2()
         return(trigger1.evaluate(news_story) and trigger2.evaluate(news_story))
 
 # Problem 9
@@ -306,7 +306,11 @@ def filter_stories(stories, triggerlist):
                 filtered_stories.append(s)
         
     # return filtered stories
-    return(filtered_stories)
+    filtered_stories_no_repeats = []
+    for i in filtered_stories:
+        if i not in filtered_stories_no_repeats:
+            filtered_stories_no_repeats.append(i)
+    return(filtered_stories_no_repeats)
 #======================
 # User-Specified Triggers
 #======================
@@ -432,10 +436,10 @@ def main_thread(master):
         print(e)
 
 
-if __name__ == '__main__':
-    root = Tk()
-    root.title("Some RSS parser")
-    t = threading.Thread(target=main_thread, args=(root,))
-    t.start()
-    root.mainloop()
+# if __name__ == '__main__':
+#     root = Tk()
+#     root.title("Some RSS parser")
+#     t = threading.Thread(target=main_thread, args=(root,))
+#     t.start()
+#     root.mainloop()
 
