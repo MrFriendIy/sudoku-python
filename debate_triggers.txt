@@ -1,0 +1,24 @@
+t1,TITLE,Trump
+t2,TITLE,Clinton
+t3,TITLE,president
+t4,TITLE,presidential
+t5,DESCRIPTION,Trump
+t6,DESCRIPTION,Clinton
+t7,DESCRIPTION,president
+t8,DESCRIPTION,presidential
+t9,BEFORE,19 Oct 2016 21:00:00
+t10,AFTER,19 Oct 2016 18:00:00
+t11,BEFORE,19 Oct 2016 23:59:59 
+t12,AND,t9,t0
+t13,AND,10,t11
+valid_date,OR,t12,t13
+// valid triggers
+t14,AND,valid_date,t1
+t15,AND,valid_date,t2
+t16,AND,valid_date,t3
+t17,AND,valid_date,t4
+t18,AND,valid_date,t5
+t19,AND,valid_date,t6
+t20,AND,valid_date,t7
+t21,AND,valid_date,t8
+ADD,t14,t15,t16,t7,t18,t19,t20,t21

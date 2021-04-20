@@ -331,9 +331,41 @@ def read_trigger_config(filename):
     # line is the list of lines that you need to parse and for which you need
     # to build triggers
 
-    print(lines) # for now, print it so you see what it contains!
-
-
+    # print(lines) # for now, print it so you see what it contains!
+    
+    # create an empty dictionary trigger dict which will hold the first elemnt of the trigger as a key and a list of all other elements
+    trigger_dict = {}
+    
+    # add all the elemts to the dict
+    for l in lines:
+        l_list = l.split(',')
+        trigger_dict[l_list[0]] = l_list[1:]
+    # loop over the first element of the lists in trigger dict to get the type of class beign called. ignore it if the key is ADD
+    trigger_list = []
+    for k in trigger_dict:
+        if trigger_dict[k][0] == 'TITLE':
+            trigger_dict[k] = TitleTrigger(trigger_dict[k][1])
+        elif trigger_dict[k][0] == 'DESCRIPTION':
+            trigger_dict[k] = DescriptionTrigger(trigger_dict[k][1])
+        elif trigger_dict[k][0] == 'AFTER':
+            trigger_dict[k] = AfterTrigger(trigger_dict[k][1])
+        elif trigger_dict[k][0] == 'BEFORE':
+            trigger_dict[k] = BeforeTrigger(trigger_dict[k][1])
+        elif trigger_dict[k][0] == 'NOT':
+            trigger_dict[k] = NotTrigger(trigger_dict[trigger_dict[k][1]], trigger_dict[k][2])
+        elif trigger_dict[k][0] == 'AND':
+            trigger_dict[k] = AndTrigger(trigger_dict[trigger_dict[k][1]], trigger_dict[k][2])
+        elif trigger_dict[k][0] == 'OR':
+            trigger_dict[k] = OrTrigger(trigger_dict[trigger_dict[k][1]], trigger_dict[k][2])
+    print(trigger_dict)
+        # check to see the key called ADD. add all its elements to a list trigger list
+    for k in trigger_dict:
+        if k == 'ADD':
+            for l in trigger_dict[k]:
+                trigger_list.append(trigger_dict[l])
+        
+    # return trigger list
+    return(trigger_list)
 
 SLEEPTIME = 120 #seconds -- how often we poll
 
@@ -349,7 +381,7 @@ def main_thread(master):
 
         # Problem 11
         # TODO: After implementing read_trigger_config, uncomment this line 
-        # triggerlist = read_trigger_config('triggers.txt')
+        triggerlist = read_trigger_config('triggers.txt')
         
         # HELPER CODE - you don't need to understand this!
         # Draws the popup window that displays the filtered stories
@@ -400,10 +432,10 @@ def main_thread(master):
         print(e)
 
 
-# if __name__ == '__main__':
-#     root = Tk()
-#     root.title("Some RSS parser")
-#     t = threading.Thread(target=main_thread, args=(root,))
-#     t.start()
-#     root.mainloop()
+if __name__ == '__main__':
+    root = Tk()
+    root.title("Some RSS parser")
+    t = threading.Thread(target=main_thread, args=(root,))
+    t.start()
+    root.mainloop()
 
