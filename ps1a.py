@@ -28,19 +28,12 @@ def load_cows(filename):
     Returns:
     a dictionary of cow name (string), weight (int) pairs
     """
+    cow_dict = {}
     file = open(filename, 'r')
-    file_list = list(file)
-    line_list = []
-    for line in file_list:
-        line = line.strip('\n')
-        line_list.append(line)
+    for line in file:
+            cow_dict[str.split(line, ',')[0]] = int(str.split(line, ',')[1])
+    return(cow_dict)
         
-    for i in range(len(line_list)):
-        line_list[i] = str.split(line_list[i], ',')
-        file_dict = {}
-    for lst in line_list:
-        file_dict[lst[0]] = lst[1]
-    return(file_dict)
 # Problem 2
 def greedy_cow_transport(cows,limit=10):
     """
@@ -64,58 +57,34 @@ def greedy_cow_transport(cows,limit=10):
     transported on a particular trip and the overall list containing all the
     trips
     """
-   # define a list "trips" with an empty list inside of it and an int called "weight_cound" = 0 and two empty lists, does and doesnt fit
     trips = [[]]
-    weight_count = 0
-    doesnt_fit = []
-    does_fit = []
-    # create a copy of the cows dict
-    cows_mutable = cows.copy()
-    # define a list with an empty string and an int 0 called "heaviest", search the copy cows dict for the heaviest cow that isn't in does/doesnt fit
-    heaviest = ['',0]
-    for cow1 in cows:
-        for cow in cows_mutable:
-            if int(cows_mutable[cow]) > heaviest[1] and cow not in doesnt_fit and cow not in does_fit:
-                heaviest[0] = cow
-                heaviest[1] = int(cows_mutable[cow])
-
-
-            # check if the cow has a weight > limit - weight_count
-            if heaviest[1] + weight_count - limit <= 0:
-
-                # if it doesn't, add that cow to the last list in trips, add it weight to weight_count, append it to does_fit, and reset heaviest
-                trips[len(trips)-1] += [heaviest[0]]
-                does_fit.append(heaviest[0])
-                weight_count += heaviest[1]
-                heaviest = ['',0]
-
-            # if the cow is too heave, append it to doesnt fit and reset heaviest
-            elif heaviest[1] + weight_count - limit > 0:
-                doesnt_fit.append(heaviest[0])
-                heaviest = ['',0]
-
-        # if every cow is in does or doesnt fit, set weight count to 0, remove does fit cows from cows_mutable, add an empty list to trips, reset fits
-        cows_count = 1
-        for cow2 in cows:
-            if cow2 in does_fit or cow2 in doesnt_fit:
-                # print('cows_count',cows_count, '\n len(cows_mutable)', len(cows_mutable), '\n cows', cows, '\n cows_mutable', cows_mutable,  '\n')
-                cows_count += 1
-            if cows_count == len(cows_mutable):
-                weight_count = 0
-                for c in does_fit:
-                    # print('c', c, '\n', 'does_fit', does_fit, '\n', 'cows_mutable', cows_mutable, '\n', 'cows_mutable[c]', cows_mutable[c])
-                    del cows_mutable[c]
-                does_fit = []
-                doesnt_fit = []
-                if cows_mutable == {}:
-                    return(trips)
+    # repeat until there are no more cows
+    while cows != {}:
+        temp_limit = limit
+        temp_cows = cows.copy()
+        # check to see if the heaviest cow can fit
+        while True:
+            heaviest = ['',0]
+            for c in temp_cows:
+                if int(temp_cows[c]) > heaviest[1]:
+                    heaviest[0] = c
+                    heaviest[1] = int(temp_cows[c])
+            if temp_limit - heaviest[1] >=0:
+                # if it can, add it to the current trip
+                temp_limit -= heaviest[1]
+                trips[-1].append(heaviest[0])
+                del temp_cows[heaviest[0]]
+                del cows[heaviest[0]]
+            # if it cannot, try the next heaviest
+            elif temp_limit - heaviest[1] < 0:
+                del temp_cows[heaviest[0]]
+            # once there are no more cows that can fit, create a new trip
+            if cows == {}:
+                break
+            if temp_cows == {}:
                 trips.append([])
-
-
-
-    # repeat until there are no cows left
-    
-    
+                break
+    return(trips)
 # Problem 3
 def brute_force_cow_transport(cows,limit=10):
     """
@@ -138,42 +107,25 @@ def brute_force_cow_transport(cows,limit=10):
     transported on a particular trip and the overall list containing all the
     trips
     """
-    # create a list of the keys in the cows dict called cows_list
-    cows_list = []
-    for key in cows:
-        cows_list.append(key)
-    
-    # call get_partitions on cows_list and assign it to a new list: part_cows_list
-    part_cows_list = []
-    for part in get_partitions(cows_list):
-        part_cows_list.append(part)
-
-    # loop over each sublist in part_cows_list and check the wieght value of each cow in it
-
-
-    for i in range(len(part_cows_list)):
-        for subsublist in part_cows_list[i-1]:
-            weight = 0
-            for cow in subsublist:
-                # add these wight values together. if it is too high, delete the list
-                weight += int(cows[cow])
-            if weight > limit:
-                subsublist.append('remove')
-    valid_trips = []    
-    for lst in part_cows_list:
-        bad_list = False
-        for sublist in lst:
-            if 'remove' in sublist:
-                bad_list = True
-        if not bad_list:
-            valid_trips.append(lst)
-            
-    # after looping over every sublist, take the list with the fewest elements and return it
-    smallest = valid_trips[0]
-    for trip in valid_trips:
-        if len(trip) < len(smallest):
-            smallest = trip
-    return(smallest)
+    # search through all the partitions of cows
+    smallest_trip = []
+    for i in range(limit):
+        smallest_trip.append(i)
+    for part in get_partitions(cows):
+        too_heavy = False
+        for trip in part:
+            weight_count = 0
+            # add up the combined weight of the cows in each trip
+            for cow in trip:
+                weight_count += cows[cow]
+                if weight_count > limit:
+                    too_heavy = True
+        # if the weight of the trip is not too much, see if its length is smaller than the current smallest
+        if not too_heavy:
+            if len(part) < len(smallest_trip):
+                smallest_trip = part
+        # once you have gone though all the sets, return the smallest
+    return(smallest_trip)
         
 # Problem 4
 def compare_cow_transport_algorithms():
@@ -189,6 +141,12 @@ def compare_cow_transport_algorithms():
     Returns:
     Does not return anything.
     """
-    print('greedy cow transport:', len(greedy_cow_transport(load_cows('ps1_cow_data.txt'))))
-    print('brute force cow transport', len(brute_force_cow_transport(load_cows('ps1_cow_data.txt'))))
+    start_greedy = time.time()
+    print('greedy length:', len(greedy_cow_transport(load_cows('ps1_cow_data.txt'))))
+    end_greedy = time.time()
+    print('greedy_time:', end_greedy - start_greedy)
+    start_brute = time.time()
+    print('brute length:', len(brute_force_cow_transport(load_cows('ps1_cow_data.txt'))))
+    end_brute = time.time()
+    print('brute time:', end_brute - start_brute)
     
