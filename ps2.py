@@ -56,11 +56,12 @@ def load_map(map_filename):
     # add the first 2 values on each line as Nodes to digraph as long as the same node has'nt been added before
     for line in file:
         for i in range(2):
-            if Node(str.split(line)[i]) not in map_graph.nodes:
-                map_graph.add_node(Node(str.split(line)[i]))
+            line_strsplit = str.split(line)
+            if Node(line_strsplit[i]) not in map_graph.nodes:
+                map_graph.add_node(Node(line_strsplit[i]))
     # each line also represents an edge, so add that to the digraph. 
-        map_graph.add_edge(WeightedEdge(Node(str.split(line)[0]), Node(str.split(line)[1]), Node(str.split(line)[2]),
-                                         Node(str.split(line)[3])))
+        map_graph.add_edge(WeightedEdge(Node(line_strsplit[0]), Node(line_strsplit[1]), Node(line_strsplit[2]),
+                                         Node(line_strsplit[3])))
     # finally, return the completed digraph
     return(map_graph)
 
@@ -81,8 +82,7 @@ def load_map(map_filename):
 # outside
 
 # Problem 3b: Implement get_best_path
-def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist,
-                  best_path):
+def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_path):
     """
     Finds the shortest path between buildings subject to constraints.
 
@@ -115,29 +115,38 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist,
         If there exists no path that satisfies max_total_dist and
         max_dist_outdoors constraints, then return None.
     """
-    path[0] += [start]
-    
+    print(path)
+    path[0].append(str(start))
     # if start and end are not valid nodes:
     #     raise an error
     if not (digraph.has_node(start) and digraph.has_node(end)):
         raise ValueError('invalid start/end nodes') 
     # elif start and end are the same node:
-    #     update the global variables appropriately
     elif start == end:
+        # update the global variables appropriately
         return(path)
     # else:
-    #     for all the child nodes of start
-    #     construct a path including that node
-    #     recursively solve the rest of the path, from the child node to the end node
+    else:
+        # for all the child nodes of start
+        for edge in digraph.get_edges_for_node(start):
+            print(start)
+            edge_dest = edge.dest
+            if str(edge_dest) not in path[0]: # avoid cycles
+                if best_dist == None or path[1] <= best_dist: # avoiding unnecicary searches once the current path is longer than the best known path
+                    if path[2] <= max_dist_outdoors: # making sure the path doesn't spend too much time outside
+                        # construct a path including that node
+                        # this adds the new distances to path
+                        path[1] += edge.get_total_distance()
+                        path[2] += edge.get_outdoor_distance()
+                        # recursively solve the rest of the path, from the child node to the end node
+                        newpath =  get_best_path(digraph, edge_dest, end, path, max_dist_outdoors, best_dist, best_path)
+                        print('newpath:', newpath)
+                        if start == end:
+                            path = [[], 0, 0]
+                        best_path = newpath
     # return the shortest path
-
-    # loop over all the child nodes of source
+    return(best_path)
     
-    
-    # 
-
-                
-
 # Problem 3c: Implement directed_dfs
 
 def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors, best_dist):
