@@ -80,9 +80,8 @@ def load_map(map_filename):
 #
 # Answer: the objective function is to minimize the total distance traveled, and the constraints are the maximum distanced 
 # outside
-
 # Problem 3b: Implement get_best_path
-def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_path):
+def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_path, layer = 0):
     """
     Finds the shortest path between buildings subject to constraints.
 
@@ -122,7 +121,10 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_
     
     # here we add the starting node to path. we could do this later on when we add the distances, but doing so would leave out the 
     # origional start from path
-    path[0].append(str(start))
+    path = [path[0] + [str(start)]] + path[1:]
+    layer += 1
+    print('layer:', layer)
+    print('path:', path)
     # if start and end are not valid nodes:
         # raise an error
     if not (digraph.has_node(start) and digraph.has_node(end)):
@@ -141,16 +143,17 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_
             edge_dest = edge.dest # this assignes the destination node as a variable, so we no longer only have edges
             # these are the optimisations to ensure that the total distance is shorter than the best distance, and that the 
             # distance outside is not greater than the maximum
+            # construct a path including that node
+            # this is where we add the new distances to path. remember, we have already added the node at the start
+            # print([path[0]], path[1], path[2], [path[1] + edge.get_total_distance()], [path[2] + edge.get_outdoor_distance()])
+            path2 = [path[0]] + [path[1] + edge.get_total_distance()] + [path[2] + edge.get_outdoor_distance()]
             if best_dist == None or path[1] <= best_dist:
-                if path[2] <= max_dist_outdoors:
+                if path2[2] <= max_dist_outdoors:
                     if str(edge_dest) not in path[0]: # this is to avoid cycles
-                        # construct a path including that node
-                        # this is where we add the new distances to path. remember, we have already added the node at the start
-                        path[1] += edge.get_total_distance()
-                        path[2] += edge.get_outdoor_distance()
+
                         # recursively solve the rest of the path, from the child node to the end node
-                        newpath = get_best_path(digraph, edge_dest, end, path, max_dist_outdoors, best_dist, best_path)
-                        print('finished recursion, path:', path, 'newpath:', newpath)
+                        newpath = get_best_path(digraph, edge_dest, end, path2, max_dist_outdoors, best_dist, best_path, layer)
+                        # print('finished recursion, path:', path, 'newpath:', newpath)
                         # the program should only reach this point once a valid path or a dead end has been found. this is
                         # because the only time we return something before this is when start == end. so, if start != end then
                         # the program should just enter a new recursive loop once it gets to the previous line. If it comes across
