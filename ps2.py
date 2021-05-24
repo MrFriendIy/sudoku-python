@@ -81,7 +81,7 @@ def load_map(map_filename):
 # Answer: the objective function is to minimize the total distance traveled, and the constraints are the maximum distanced 
 # outside
 # Problem 3b: Implement get_best_path
-def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_path, layer = 0):
+def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_path):
     """
     Finds the shortest path between buildings subject to constraints.
 
@@ -92,7 +92,7 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_
             Building number at which to start
         end: string
             Building number at which to end
-        path: list composed of [[list of strings], int, int]
+        path:   composed of [[list of strings], int, int]
             Represents the current path of nodes being traversed. Contains
             a list of node names, total distance traveled, and total
             distance outdoors.
@@ -116,44 +116,40 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_
     """
     
     
-    '''' my current ssu is that, unlike in the code the instrutor wrote, when I go up a recursive layer, path doesn't change back
-    to how it was when it started at that layer (it keeps all the nodes it visited instead of forgetting them)'''   
     
     # here we add the starting node to path. we could do this later on when we add the distances, but doing so would leave out the 
     # origional start from path
-    path = [path[0] + [str(start)]] + path[1:]
-    layer += 1
-    print('layer:', layer)
-    print('path:', path)
+    start_node = Node(start)
+    end_node = Node(end)
+    if path == None:
+        path = ([start_node], 0, 0)
+    else:
+        path = (path[0] + [start_node], path[1], path[2])
     # if start and end are not valid nodes:
         # raise an error
-    if not (digraph.has_node(start) and digraph.has_node(end)):
+    if not (digraph.has_node(start_node) and digraph.has_node(end_node)):
         raise ValueError('invalid start/end nodes') 
     # elif start and end are the same node:
         # update the global variables appropriately
-    elif start == end:
-        print('end found')
+    elif start_node == end_node:
         # this should return the unchanged path, as if start and end are the same, you don't need to go anywhere. this means for
         # a graph which has 1 node or has start = end from the beginning, it should just return [[start], 0, 0]
-        return(path)
+        return(path[0], path[1])
     # else:
     else:
         # for all the child nodes of start
-        for edge in digraph.get_edges_for_node(start): # this gives the edges connected to start, but we want the nodes
+        for edge in digraph.get_edges_for_node(start_node): # this gives the edges connected to start, but we want the nodes
             edge_dest = edge.dest # this assignes the destination node as a variable, so we no longer only have edges
             # these are the optimisations to ensure that the total distance is shorter than the best distance, and that the 
             # distance outside is not greater than the maximum
             # construct a path including that node
             # this is where we add the new distances to path. remember, we have already added the node at the start
-            # print([path[0]], path[1], path[2], [path[1] + edge.get_total_distance()], [path[2] + edge.get_outdoor_distance()])
-            path2 = [path[0]] + [path[1] + edge.get_total_distance()] + [path[2] + edge.get_outdoor_distance()]
+            path2 = [path[0]] + [path[1] + int(str(edge.get_total_distance()))] + [path[2] + int(str(edge.get_outdoor_distance()))]
             if best_dist == None or path[1] <= best_dist:
                 if path2[2] <= max_dist_outdoors:
-                    if str(edge_dest) not in path[0]: # this is to avoid cycles
-
+                    if edge_dest not in path[0]: # this is to avoid cycles
                         # recursively solve the rest of the path, from the child node to the end node
-                        newpath = get_best_path(digraph, edge_dest, end, path2, max_dist_outdoors, best_dist, best_path, layer)
-                        # print('finished recursion, path:', path, 'newpath:', newpath)
+                        newpath = get_best_path(digraph, edge_dest, end, path2, max_dist_outdoors, best_dist, best_path)
                         # the program should only reach this point once a valid path or a dead end has been found. this is
                         # because the only time we return something before this is when start == end. so, if start != end then
                         # the program should just enter a new recursive loop once it gets to the previous line. If it comes across
@@ -167,7 +163,7 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_
                         # at this point, best path should always be a valid path. and, because we had the check for if best_dist
                         # > the current path distance, it should also always be better or = to the previous best path.
                     else:
-                        print('already visited:', edge_dest) 
+                        pass
         # return the shortest path 
         return(best_path)
 
