@@ -198,10 +198,11 @@ def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors, best_di
         max_dist_outdoors constraints, then raises a ValueError.
     """
     # we have already done most of the work for this problem. All that's left is calling it and checking for max distance
-    best_path, best_dist = get_best_path(digraph, start, end, None, max_dist_outdoors, None, None)
-    if best_path == None:
+    try:
+        best_path, best_dist = get_best_path(digraph, start, end, None, max_dist_outdoors, None, None)
+    except:
         raise ValueError('no path exists')
-    elif best_dist > max_total_dist:
+    if best_dist > max_total_dist:
         raise ValueError('no path exists that is shorter than', max_total_dist)
     else:
         return(best_path)
@@ -292,5 +293,5 @@ class Ps2Test(unittest.TestCase):
         self._test_impossible_path('10', '32', total_dist=100)
 
 
-# if __name__ == "__main__":
-#     unittest.main()
+if __name__ == "__main__":
+    unittest.main()
