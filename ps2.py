@@ -145,7 +145,7 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_
             # construct a path including that node
             # this is where we add the new distances to path. remember, we have already added the node at the start
             path2 = [path[0]] + [path[1] + int(str(edge.get_total_distance()))] + [path[2] + int(str(edge.get_outdoor_distance()))]
-            if best_dist == None or path[1] <= best_dist:
+            if best_dist == None or path2[1] <= best_dist:
                 if path2[2] <= max_dist_outdoors:
                     if edge_dest not in path[0]: # this is to avoid cycles
                         # recursively solve the rest of the path, from the child node to the end node
@@ -197,9 +197,15 @@ def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors, best_di
         If there exists no path that satisfies max_total_dist and
         max_dist_outdoors constraints, then raises a ValueError.
     """
-    pass
-        
- 
+    # we have already done most of the work for this problem. All that's left is calling it and checking for max distance
+    best_path, best_dist = get_best_path(digraph, start, end, None, max_dist_outdoors, None, None)
+    if best_path == None:
+        raise ValueError('no path exists')
+    elif best_dist > max_total_dist:
+        raise ValueError('no path exists that is shorter than', max_total_dist)
+    else:
+        return(best_path)
+     
 
 
 # ================================================================
