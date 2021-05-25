@@ -169,7 +169,7 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist, best_
 
 # Problem 3c: Implement directed_dfs
 
-def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors, best_dist):
+def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors, best_dist=None):
     """
     Finds the shortest path from start to end using a directed depth-first
     search. The total distance traveled on the path must not
