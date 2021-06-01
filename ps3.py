@@ -85,9 +85,14 @@ class RectangularRoom(object):
         self.height = height
         self.dirt = dirt_amount
         # this creates a dictionary with all the tiles and their dirt amounts in them. it goes row
-        # by row and adds the tiles that way. This was not explicitly instructed, but they said that
-        # if you find anything veuge, then find your best way to selve it and make a comment. this
-        # is how I am going to represent how the tiles are stored
+        # by row and adds the tiles that way. This was not explicitly instructed, but they said:
+        # "If you find any places above where the specification of the simulation dynamics seems
+        # ambiguouss, it is up to you to make a reasonable decision about how your program/model will
+        # behave, and document that decision in your code."
+        # while they did specify that the tiles should be ordered pairs on ints (w,h), they didn't
+        # specify how to store all the tiles or how to keep track of the dirt on the tiles. Making 
+        # a dictionary to store the tiles, and adding another int which represented the dirt value
+        # seemed like a reasonable way to do this to me.
         col = 0
         row = 0
         tiles = {}
@@ -238,12 +243,12 @@ class Robot(object):
         self.speed = speed
         self.cap = capacity
         self.angle = random.uniform(0.0, 360.0)
-        self.pos = (random.uniform(0.0, room.height), random.uniform(0.0, room.width))  
+        self.pos = Position(random.uniform(0.0, room.height), random.uniform(0.0, room.width))  
     def get_robot_position(self):
         """
         Returns: a Position object giving the robot's position in the room.
         """
-        return(Position(self.pos[0], self.pos[1]))
+        return(self.pos)
 
     def get_robot_direction(self):
         """
@@ -258,7 +263,7 @@ class Robot(object):
 
         position: a Position object.
         """
-        self.pos = position.get_x(), position.get_y()
+        self.pos = position
         
     def set_robot_direction(self, direction):
         """
