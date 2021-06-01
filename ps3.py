@@ -1,490 +1,572 @@
-# 6.0001 Problem Set 3
-#
-# The 6.0001 Word Game
-# Created by: Kevin Luu <luuk> and Jenna Wiens <jwiens>
-#
-# Name          : <your name>
-# Collaborators : <your collaborators>
-# Time spent    : <total time>
+# -*- coding: utf-8 -*-
+# Problem Set 3: Simulating robots
+# Name:
+# Collaborators (discussion):
+# Time:
 
 import math
 import random
-import string
 
-VOWELS = 'aeiou'
-CONSONANTS = 'bcdfghjklmnpqrstvwxyz'
-HAND_SIZE = 9
+import ps3_visualize
+import pylab
 
-SCRABBLE_LETTER_VALUES = {
-    'a': 1, 'b': 3, 'c': 3, 'd': 2, 'e': 1, 'f': 4, 'g': 2, 'h': 4, 'i': 1, 'j': 8, 'k': 5, 'l': 1, 'm': 3, 'n': 1, 'o': 1, 'p': 3, 'q': 10, 'r': 1, 's': 1, 't': 1, 'u': 1, 'v': 4, 'w': 4, 'x': 8, 'y': 4, 'z': 10, '*':0
-}
+# For python 2.7:
+from ps3_verify_movement27 import test_robot_movement
 
-# -----------------------------------
-# Helper code
-# (you don't need to understand this helper code)
 
-WORDLIST_FILENAME = "words.txt"
-
-def load_words():
+# === Provided class Position
+class Position(object):
     """
-    Returns a list of valid words. Words are strings of lowercase letters.
-    
-    Depending on the size of the word list, this function may
-    take a while to finish.
+    A Position represents a location in a two-dimensional room, where
+    coordinates are given by floats (x, y).
     """
-    
-    print("Loading word list from file...")
-    # inFile: file
-    inFile = open(WORDLIST_FILENAME, 'r')
-    # wordlist: list of strings
-    wordlist = []
-    for line in inFile:
-        wordlist.append(line.strip().lower())
-    print("  ", len(wordlist), "words loaded.")
-    return wordlist
-
-def get_frequency_dict(sequence):
-    """
-    Returns a dictionary where the keys are elements of the sequence
-    and the values are integer counts, for the number of times that
-    an element is repeated in the sequence.
-
-    sequence: string or list
-    return: dictionary
-    """
-    
-    # freqs: dictionary (element_type -> int)
-    freq = {}
-    for x in sequence:
-        freq[x] = freq.get(x,0) + 1
-    return freq
-	
-
-# (end of helper code)
-# -----------------------------------
-
-#
-# Problem #1: Scoring a word
-#
-def get_word_score(word, n):
-    """
-    Returns the score for a word. Assumes the word is a
-    valid word.
-
-    You may assume that the input word is always either a string of letters, 
-    or the empty string "". You may not assume that the string will only contain 
-    lowercase letters, so you will have to handle uppercase and mixed case strings 
-    appropriately. 
-
-	The score for a word is the product of two components:
-
-	The first component is the sum of the points for letters in the word.
-	The second component is the larger of:
-            1, or
-            7*wordlen - 3*(n-wordlen), where wordlen is the length of the word
-            and n is the hand length when the word was played
-
-	Letters are scored as in Scrabble; A is worth 1, B is
-	worth 3, C is worth 3, D is worth 2, E is worth 1, and so on.
-
-    word: string
-    n: int >= 0
-    returns: int >= 0
-    """
-    wordvalue = word.lower()
-    score = 0
-    letter_score = 0
-    for c in wordvalue:
-        letter_score = letter_score + SCRABBLE_LETTER_VALUES[c]
-    if (7*len(wordvalue)-3 * (n-len(wordvalue))) > 1:
-        score = (7*len(wordvalue)-3 * (n-len(wordvalue)))
-    else:
-        score = 1
-    return(letter_score * score)
+    def __init__(self, x, y):
+        """
+        Initializes a position with coordinates (x, y).
+        """
+        self.x = x
+        self.y = y
         
+    def get_x(self):
+        return self.x
     
-#et_word_score('jar', 7)
-
-
-#test_get_word_score()
-# Make sure you understand how this function works and what it does!
-#
-def display_hand(hand):
-    """
-    Displays the letters currently in the hand.
-
-    For example:
-       display_hand({'a':1, 'x':2, 'l':3, 'e':1})
-    Should print out something like:
-       a x x l l l e
-    The order of the letters is unimportant.
-
-    hand: dictionary (string -> int)
-    """
+    def get_y(self):
+        return self.y
     
-    for letter in hand.keys():
-        for j in range(hand[letter]):
-             print(letter, end=' ')      # print all on the same line
-    print()                              # print an empty line
+    def get_new_position(self, angle, speed):
+        """
+        Computes and returns the new Position after a single clock-tick has
+        passed, with this object as the current position, and with the
+        specified angle and speed.
 
-#
-# Make sure you understand how this function works and what it does!
-# You will need to modify this for Problem #4.
-#
-def deal_hand(n):
-    """
-    Returns a random hand containing n lowercase letters.
-    ceil(n/3) letters in the hand should be VOWELS (note,
-    ceil(n/3) means the smallest integer not less than n/3).
+        Does NOT test whether the returned position fits inside the room.
 
-    Hands are represented as dictionaries. The keys are
-    letters and the values are the number of times the
-    particular letter is repeated in that hand.
+        angle: float representing angle in degrees, 0 <= angle < 360
+        speed: positive float representing speed
 
-    n: int >= 0
-    returns: dictionary (string -> int)
-    """
-    
-    hand={'*':1}
-    num_vowels = int(math.ceil(n / 3))
-
-    for i in range(num_vowels):
-        x = random.choice(VOWELS)
-        hand[x] = hand.get(x, 0) + 1
-    
-    for i in range(num_vowels, n):    
-        x = random.choice(CONSONANTS)
-        hand[x] = hand.get(x, 0) + 1
-    
-    return hand
-
-#
-# Problem #2: Update a hand by removing letters
-#
-def update_hand(hand, word):
-    """
-    Does NOT assume that hand contains every letter in word at least as
-    many times as the letter appears in word. Letters in word that don't
-    appear in hand should be ignored. Letters that appear in word more times
-    than in hand should never result in a negative count; instead, set the
-    count in the returned hand to 0 (or remove the letter from the
-    dictionary, depending on how your code is structured). 
-
-    Updates the hand: uses up the letters in the given word
-    and returns the new hand, without those letters in it.
-
-    Has no side effects: does not modify hand.
-
-    word: string
-    hand: dictionary (string -> int)    
-    returns: dictionary (string -> int)
-    """
-    temp_hand = dict(hand)
-    new_hand = dict(hand)
-    for l in hand.values():
-        if l < 0:
-            l = 0
-    for c in word.lower():
-        if c in hand.keys():
-            if hand.get(c,0) > 0:
-                temp_hand[c] = temp_hand[c] - 1
-                new_hand[c] = temp_hand[c]   
-            else:
-                new_hand[c] = 0
-        else:
-            new_hand[c] = hand.get(c,0)
-    for l in new_hand.copy():
-        if new_hand[l] <= 0:
-            del new_hand[l]
-    return(new_hand)
-
-#update_hand(C, 'quail')
-
-#print(update_hand({'a':1, 'q':1, 'l':2, 'm':1, 'u':1, 'i':1}, 'mix'))
-
-# ('e','u','i','o','a')
-# Problem #3: Test word validity
-#
-def is_valid_word(word, hand, word_list):
-    """
-    Returns True if word is in the word_list and is entirely
-    composed of letters in the hand. Otherwise, returns False.
-    Does not mutate hand or word_list.
-   
-    word: string
-    hand: dictionary (string -> int)
-    word_list: list of lowercase strings
-    returns: boolean
-    """
-    vowels = ('e','u','i','o','a')
-    truth = 0
-    hand_repeats = dict(hand)
-    for c in word.lower():
-       if hand_repeats.get(c,0) > 0 and word.lower() in word_list:
-           truth = truth + 1
-           hand_repeats[c] = hand_repeats[c] - 1
-       if truth == len(word):
-           return(True)
-       elif c == '*':
-           for l in vowels:
-               if word.replace('*', l) in word_list:
-                   return(True)
-               
-
-           
-
-
-
-#print(is_valid_word('m*ll', {'a':1, 'q':1, 'l':2, 'm':1, 'u':1, 'i':1, '*':1}, load_words()))
-
-
-
-
-
-
-# Problem #5: Playing a hand
-#
-def calculate_handlen(hand):
-    """ 
-    Returns the length (number of letters) in the current hand.
-    
-    hand: dictionary (string-> int)
-    returns: integer
-    """
-    
-    return(sum(hand.values()))
+        Returns: a Position object representing the new position.
+        """
+        old_x, old_y = self.get_x(), self.get_y()
         
-
-def play_hand(hand, word_list):
-
-    """
-    Allows the user to play the given hand, as follows:
-
-    * The hand is displayed.
-    
-    * The user may input a word.
-
-    * When any word is entered (valid or invalid), it uses up letters
-      from the hand.
-
-    * An invalid word is rejected, and a message is displayed asking
-      the user to choose another word.
-
-    * After every valid word: the score for that word is displayed,
-      the remaining letters in the hand are displayed, and the user
-      is asked to input another word.
-
-    * The sum of the word scores is displayed when the hand finishes.
-
-    * The hand finishes when there are no more unused letters.
-      The user can also finish playing the hand by inputing two 
-      exclamation points (the string '!!') instead of a word.
-
-      hand: dictionary (string -> int)
-      word_list: list of lowercase strings
-      returns: the total score for the hand
-      
-    """
-    score = 0
-    while hand != {}:
-        old_hand = dict(hand)
-        print('current hand: ')
-        display_hand(hand)
-        word = input('enter word, or "!!" to indicate that you are done: ')
-        valid = is_valid_word(word, hand, word_list)
-        if word != '!!':
-            hand = update_hand(hand, word)
-        if valid:
-            score = score + get_word_score(word, len(old_hand))
-            print('"', word, '"', 'earned ', get_word_score(word, len(old_hand)), 'points. total:', score)
-        if word != '!!' and valid != 1:
-            print('invalid word. Please choose another')
-        if word == '!!':
-            print('total score for this hand:', score)
-            return(score)
-        if sum(hand.values()) == 0:
-            print('ran out of letters')
-            print('total score for this hand:', score)
-            return(score)
+        # Compute the change in position
+        delta_y = speed * math.cos(math.radians(angle))
+        delta_x = speed * math.sin(math.radians(angle))
         
-#play_hand({'a':1, 'c':1, 'f':1, 'i':1, 't':1, 'x':1, '*':1}, load_words())        
-    
-#play_hand({'a':1,'p':2,'l':2,'e':1}, load_words())    
-    # BEGIN PSEUDOCODE <-- Remove this comment when you implement this function
-    # Keep track of the total score
-    
-    # As long as there are still letters left in the hand:
-    
-        # Display the hand
+        # Add that to the existing position
+        new_x = old_x + delta_x
+        new_y = old_y + delta_y
         
-        # Ask user for input
-        
-        # If the input is two exclamation points:
-        
-            # End the game (break out of the loop)
+        return Position(new_x, new_y)
 
-            
-        # Otherwise (the input is not two exclamation points):
-
-            # If the word is valid:
-
-                # Tell the user how many points the word earned,
-                # and the updated total score
-
-            # Otherwise (the word is not valid):
-                # Reject invalid word (print a message)
-                
-            # update the user's hand by removing the letters of their inputted word
-            
-
-    # Game is over (user entered '!!' or ran out of letters),
-    # so tell user the total score
-
-    # Return the total score as result of function
+    def __str__(self):  
+        return "Position: " + str(math.floor(self.x)) + ", " + str(math.floor(self.y))
 
 
-
-#
-# Problem #6: Playing a game
-# 
-
-
-#
-# procedure you will use to substitute a letter in a hand
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
-def substitute_hand(hand, letter):
-    """ 
-    Allow the user to replace all copies of one letter in the hand (chosen by user)
-    with a new letter chosen from the VOWELS and CONSONANTS at random. The new letter
-    should be different from user's choice, and should not be any of the letters
-    already in the hand.
-
-    If user provide a letter not in the hand, the hand should be the same.
-
-    Has no side effects: does not mutate hand.
-
-    For example:
-        substitute_hand({'h':1, 'e':1, 'l':2, 'o':1}, 'l')
-    might return:
-        {'h':1, 'e':1, 'o':1, 'x':2} -> if the new letter is 'x'
-    The new letter should not be 'h', 'e', 'l', or 'o' since those letters were
-    already in the hand.
-    
-    hand: dictionary (string -> int)
-    letter: string
-    returns: dictionary (string -> int)
+# === Problem 1
+class RectangularRoom(object):
     """
-    alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-    hand_copy = dict(hand)
-    i = 0
-    if letter in hand:
-        del hand_copy[letter]
-    new_letter = random.choice(alphabet)
-    while new_letter in hand:
-        new_letter = random.choice(alphabet)
-    hand_copy[new_letter] = 0
-    while i < hand[letter]:
-        i += 1
-        hand_copy[new_letter] = hand_copy[new_letter] + 1
-    return(hand_copy)
-            
-    
-    
-    
-       
-    
-def play_game(word_list):
+    A RectangularRoom represents a rectangular region containing clean or dirty
+    tiles.
+
+    A room has a width and a height and contains (width * height) tiles. Each tile
+    has some fixed amount of dirt. The tile is considered clean only when the amount
+    of dirt on this tile is 0.
     """
-    Allow the user to play a series of hands
+    def __init__(self, width, height, dirt_amount):
+        """
+        Initializes a rectangular room with the specified width, height, and 
+        dirt_amount on each tile.
 
-    * Asks the user to input a total number of hands
+        width: an integer > 0
+        height: an integer > 0
+        dirt_amount: an integer >= 0
+        """
+        self.width = width
+        self.height = height
+        self.dirt = dirt_amount
+        # this creates a dictionary with all the tiles and their dirt amounts in them. it goes row
+        # by row and adds the tiles that way. This was not explicitly instructed, but they said that
+        # if you find anything veuge, then find your best way to selve it and make a comment. this
+        # is how I am going to represent how the tiles are stored
+        col = 0
+        row = 0
+        tiles = {}
+        # I am going to use this loop:
+            # for tile in tiles:
+            # if x == tiles[tile][0] and y == tiles[tile][1]:
+        # in almost every single method. If it is ok, I might want to just make a method that does
+        # this instead of typing it out in whole every time
+        for i in range(self.width * self.height):
+            tiles[i] = (row, col, self.dirt)
+            col += 1
+            if col == self.width:
+                col = 0
+                row += 1
+        self.tiles = tiles
+    def clean_tile_at_position(self, pos, capacity):
+        """
+        Mark the tile under the position pos as cleaned by capacity amount of dirt.
 
-    * Accumulates the score for each hand into a total score for the 
-      entire series
- 
-    * For each hand, before playing, ask the user if they want to substitute
-      one letter for another. If the user inputs 'yes', prompt them for their
-      desired letter. This can only be done once during the game. Once the
-      substitue option is used, the user should not be asked if they want to
-      substitute letters in the future.
+        Assumes that pos represents a valid position inside this room.
 
-    * For each hand, ask the user if they would like to replay the hand.
-      If the user inputs 'yes', they will replay the hand and keep 
-      the better of the two scores for that hand.  This can only be done once 
-      during the game. Once the replay option is used, the user should not
-      be asked if they want to replay future hands. Replaying the hand does
-      not count as one of the total number of hands the user initially
-      wanted to play.
+        pos: a Position object
+        capacity: the amount of dirt to be cleaned in a single time-step
+                  can be negative which would mean adding dirt to the tile
 
-            * Note: if you replay a hand, you do not get the option to substitute
-                    a letter - you must play whatever hand you just had.
-      
-    * Returns the total score for the series of hands
+        Note: The amount of dirt on each tile should be NON-NEGATIVE.
+              If the capacity exceeds the amount of dirt on the tile, mark it as 0.
+        """
+        tiles = self.tiles
+        row = math.floor(pos.get_x())
+        col = math.floor(pos.get_y())
+        for tile in tiles:
+            if row == tiles[tile][0] and col == tiles[tile][1]:
+                if tiles[tile][2] - capacity >= 0:
+                    tiles[tile] = tiles[tile][0], tiles[tile][1], tiles[tile][2] - capacity
+                else:
+                    tiles[tile] = tiles[tile][0], tiles[tile][1], 0
+    def is_tile_cleaned(self, m, n):
+        """
+        Return True if the tile (m, n) has been cleaned.
 
-    word_list: list of lowercase strings
-    """
+        Assumes that (m, n) represents a valid tile inside the room.
 
-    hand_number = int(input('enter total number of hands: '))
-    total_score = 0
-    can_replay = True
-    can_sub = True
-    for i in range(hand_number):
-        hand = deal_hand(HAND_SIZE)
-        new_hand = dict(hand)
-        print('current hand: ', end='')
-        display_hand(new_hand)
-        if can_sub:    
-            if input('would you like to substitute a letter? ') == 'yes':
-                new_hand = substitute_hand(new_hand, input('Which letter would you like to replace: '))
-                can_sub = False
-        game_score = play_hand(new_hand, word_list)
-        if can_replay:
-            replay = input('would you like to replay the hand? ')
-            if replay == 'yes':
-                new_hand = hand
-                new_game_score = play_hand(new_hand, word_list)
-                can_replay = False
-                if new_game_score > game_score:
-                    game_score = new_game_score
-        total_score = total_score + game_score
-    print('Total score over all hands: ', total_score )
-    return(total_score)
-
-   
-    
-   
-    
-   
-
-
-    #Enter total number of hands: int
-    #Current hand: dictionary
-    #Would you like to substitute a letter? yes/no
-    #
-    #run play_hand until done
-    #rerun play hadn for however many total hands wanted
+        m: an integer
+        n: an integer
         
+        Returns: True if the tile (m, n) is cleaned, False otherwise
+
+        Note: The tile is considered clean only when the amount of dirt on this
+              tile is 0.
+        """
+        tiles = self.tiles
+        for tile in tiles:
+            if m == tiles[tile][0] and n == tiles[tile][1]:
+                truth = tiles[tile][2] == 0
+        return(truth)
+    def get_num_cleaned_tiles(self):
+        """
+        Returns: an integer; the total number of clean tiles in the room
+        """
+        tiles = self.tiles
+        clean_tiles = 0
+        for tile in tiles:
+            if tiles[tile][2] == 0:
+                clean_tiles += 1
+        return(clean_tiles)
+        
+    def is_position_in_room(self, pos):
+        """
+        Determines if pos is inside the room.
+
+        pos: a Position object.
+        Returns: True if pos is in the room, False otherwise.
+        """
+        truth = False
+        tiles = self.tiles
+        x = math.floor(pos.get_x())
+        y = math.floor(pos.get_y())
+        for tile in tiles:
+            if x == tiles[tile][0] and y == tiles[tile][1]:
+                truth = True
+        return(truth)
+        
+    def get_dirt_amount(self, m, n):
+        """
+        Return the amount of dirt on the tile (m, n)
+        
+        Assumes that (m, n) represents a valid tile inside the room.
+
+        m: an integer
+        n: an integer
+
+        Returns: an integer
+        """
+        tiles = self.tiles
+        for tile in tiles:
+            if m == tiles[tile][0] and n == tiles[tile][1]:
+                dirt = tiles[tile][2]
+        return(dirt)
+    def get_num_tiles(self):
+        """
+        Returns: an integer; the total number of tiles in the room
+        """
+        # do not change -- implement in subclasses.
+        raise NotImplementedError 
+        
+    def is_position_valid(self, pos):
+        """
+        pos: a Position object.
+        
+        returns: True if pos is in the room and (in the case of FurnishedRoom) 
+                 if position is unfurnished, False otherwise.
+        """
+        # do not change -- implement in subclasses
+        raise NotImplementedError         
+
+    def get_random_position(self):
+        """
+        Returns: a Position object; a random position inside the room
+        """
+        # do not change -- implement in subclasses
+        raise NotImplementedError        
+
+
+
+class Robot(object):
+    """
+    Represents a robot cleaning a particular room.
+
+    At all times, the robot has a particular position and direction in the room.
+    The robot also has a fixed speed and a fixed cleaning capacity.
+
+    Subclasses of Robot should provide movement strategies by implementing
+    update_position_and_clean, which simulates a single time-step.
+    """
+    def __init__(self, room, speed, capacity):
+        """
+        Initializes a Robot with the given speed and given cleaning capacity in the 
+        specified room. The robot initially has a random direction and a random 
+        position in the room.
+
+        room:  a RectangularRoom object.
+        speed: a float (speed > 0)
+        capacity: a positive interger; the amount of dirt cleaned by the robot 
+                  in a single time-step
+        """
+        self.room = room
+        self.speed = speed
+        self.cap = capacity
+        self.angle = random.uniform(0.0, 360.0)
+        self.pos = (random.uniform(0.0, room.height), random.uniform(0.0, room.width))  
+    def get_robot_position(self):
+        """
+        Returns: a Position object giving the robot's position in the room.
+        """
+        return(Position(self.pos[0], self.pos[1]))
+
+    def get_robot_direction(self):
+        """
+        Returns: a float d giving the direction of the robot as an angle in
+        degrees, 0.0 <= d < 360.0.
+        """
+        return(self.angle)
+
+    def set_robot_position(self, position):
+        """
+        Set the position of the robot to position.
+
+        position: a Position object.
+        """
+        self.pos = position.get_x(), position.get_y()
+        
+    def set_robot_direction(self, direction):
+        """
+        Set the direction of the robot to direction.
+
+        direction: float representing an angle in degrees
+        """
+        self.angle = direction
+        
+    def update_position_and_clean(self):
+        """
+        Simulate the raise passage of a single time-step.
+
+        Move the robot to a new random position (if the new position is invalid, 
+        rotate once to a random new direction, and stay stationary) and mark the tile it is on as having
+        been cleaned by capacity amount. 
+        """
+        # do not change -- implement in subclasses
+        raise NotImplementedError
+
+def test_work():
+    recroomt1 = RectangularRoom(3,4,2)
+    robott1 = Robot(recroomt1, 1, 1)
+    position_test1 = Position(1.7,2.1)
+    position_test2 = Position(3.9,2.0)
+    position_test3 = Position(0.0,0.0)
+    position_test4 = Position(4.0,0.0)
+    position_test5 = Position(-0.9,0.0)
     
-
-
-#
-# Build data structures used for entire session and play game
-# Do not remove the "if __name__ == '__main__':" line - this code is executed
-# when the program is run directly, instead of through an import statement
-#
+    # print(recroomt1.tiles)
+    # print(recroomt1.clean_tile_at_position(position_test1, 0))
+    # recroomt1.clean_tile_at_position(position_test2, 0)
+    # recroomt1.clean_tile_at_position(position_test3, 1)
+    # print(recroomt1.is_tile_cleaned(1, 2))
+    # print(recroomt1.get_num_cleaned_tiles())
+    # print(recroomt1.is_position_in_room(position_test3))
+    # print(recroomt1.is_position_in_room(position_test4))
+    # print(recroomt1.is_position_in_room(position_test5))
+    # print(recroomt1.get_dirt_amount(3, 2))
+    # print(recroomt1.get_dirt_amount(0, 0))
+    
+    # print(robott1)
+    # print(robott1.get_robot_position())
+    # print(robott1.get_robot_direction())
+    # robott1.set_robot_position(position_test1)
+    # print(robott1.get_robot_position())
+    # robott1.set_robot_direction(275.679)
+    # print(robott1.get_robot_direction())
+    
 if __name__ == '__main__':
-    word_list = load_words()
-    play_game(word_list)
+    test_work()
+
+
+
+# === Problem 2
+class EmptyRoom(RectangularRoom):
+    """
+    An EmptyRoom represents a RectangularRoom with no furniture.
+    """
+    def get_num_tiles(self):
+        """
+        Returns: an integer; the total number of tiles in the room
+        """
+        raise NotImplementedError
+        
+    def is_position_valid(self, pos):
+        """
+        pos: a Position object.
+        
+        Returns: True if pos is in the room, False otherwise.
+        """
+        raise NotImplementedError
+        
+    def get_random_position(self):
+        """
+        Returns: a Position object; a valid random position (inside the room).
+        """
+        raise NotImplementedError
+
+class FurnishedRoom(RectangularRoom):
+    """
+    A FurnishedRoom represents a RectangularRoom with a rectangular piece of 
+    furniture. The robot should not be able to land on these furniture tiles.
+    """
+    def __init__(self, width, height, dirt_amount):
+        """ 
+        Initializes a FurnishedRoom, a subclass of RectangularRoom. FurnishedRoom
+        also has a list of tiles which are furnished (furniture_tiles).
+        """
+        # This __init__ method is implemented for you -- do not change.
+        
+        # Call the __init__ method for the parent class
+        RectangularRoom.__init__(self, width, height, dirt_amount)
+        # Adds the data structure to contain the list of furnished tiles
+        self.furniture_tiles = []
+        
+    def add_furniture_to_room(self):
+        """
+        Add a rectangular piece of furniture to the room. Furnished tiles are stored 
+        as (x, y) tuples in the list furniture_tiles 
+        
+        Furniture location and size is randomly selected. Width and height are selected
+        so that the piece of furniture fits within the room and does not occupy the 
+        entire room. Position is selected by randomly selecting the location of the 
+        bottom left corner of the piece of furniture so that the entire piece of 
+        furniture lies in the room.
+        """
+        # This addFurnitureToRoom method is implemented for you. Do not change it.
+        furniture_width = random.randint(1, self.width - 1)
+        furniture_height = random.randint(1, self.height - 1)
+
+        # Randomly choose bottom left corner of the furniture item.    
+        f_bottom_left_x = random.randint(0, self.width - furniture_width)
+        f_bottom_left_y = random.randint(0, self.height - furniture_height)
+
+        # Fill list with tuples of furniture tiles.
+        for i in range(f_bottom_left_x, f_bottom_left_x + furniture_width):
+            for j in range(f_bottom_left_y, f_bottom_left_y + furniture_height):
+                self.furniture_tiles.append((i,j))             
+
+    def is_tile_furnished(self, m, n):
+        """
+        Return True if tile (m, n) is furnished.
+        """
+        raise NotImplementedError
+        
+    def is_position_furnished(self, pos):
+        """
+        pos: a Position object.
+
+        Returns True if pos is furnished and False otherwise
+        """
+        raise NotImplementedError
+        
+    def is_position_valid(self, pos):
+        """
+        pos: a Position object.
+        
+        returns: True if pos is in the room and is unfurnished, False otherwise.
+        """
+        raise NotImplementedError
+        
+    def get_num_tiles(self):
+        """
+        Returns: an integer; the total number of tiles in the room that can be accessed.
+        """
+        raise NotImplementedError
+        
+    def get_random_position(self):
+        """
+        Returns: a Position object; a valid random position (inside the room and not in a furnished area).
+        """
+        raise NotImplementedError
+
+# === Problem 3
+class StandardRobot(Robot):
+    """
+    A StandardRobot is a Robot with the standard movement strategy.
+
+    At each time-step, a StandardRobot attempts to move in its current
+    direction; when it would hit a wall or furtniture, it *instead*
+    chooses a new direction randomly.
+    """
+    def update_position_and_clean(self):
+        """
+        Simulate the raise passage of a single time-step.
+
+        Move the robot to a new random position (if the new position is invalid, 
+        rotate once to a random new direction, and stay stationary) and clean the dirt on the tile
+        by its given capacity. 
+        """
+        raise NotImplementedError
+
+# Uncomment this line to see your implementation of StandardRobot in action!
+#test_robot_movement(StandardRobot, EmptyRoom)
+#test_robot_movement(StandardRobot, FurnishedRoom)
+
+# === Problem 4
+class FaultyRobot(Robot):
+    """
+    A FaultyRobot is a robot that will not clean the tile it moves to and
+    pick a new, random direction for itself with probability p rather
+    than simply cleaning the tile it moves to.
+    """
+    p = 0.15
+
+    @staticmethod
+    def set_faulty_probability(prob):
+        """
+        Sets the probability of getting faulty equal to PROB.
+
+        prob: a float (0 <= prob <= 1)
+        """
+        FaultyRobot.p = prob
+    
+    def gets_faulty(self):
+        """
+        Answers the question: Does this FaultyRobot get faulty at this timestep?
+        A FaultyRobot gets faulty with probability p.
+
+        returns: True if the FaultyRobot gets faulty, False otherwise.
+        """
+        return random.random() < FaultyRobot.p
+    
+    def update_position_and_clean(self):
+        """
+        Simulate the passage of a single time-step.
+
+        Check if the robot gets faulty. If the robot gets faulty,
+        do not clean the current tile and change its direction randomly.
+
+        If the robot does not get faulty, the robot should behave like
+        StandardRobot at this time-step (checking if it can move to a new position,
+        move there if it can, pick a new direction and stay stationary if it can't)
+        """
+        raise NotImplementedError
+        
+    
+#test_robot_movement(FaultyRobot, EmptyRoom)
+
+# === Problem 5
+def run_simulation(num_robots, speed, capacity, width, height, dirt_amount, min_coverage, num_trials,
+                  robot_type):
+    """
+    Runs num_trials trials of the simulation and returns the mean number of
+    time-steps needed to clean the fraction min_coverage of the room.
+
+    The simulation is run with num_robots robots of type robot_type, each       
+    with the input speed and capacity in a room of dimensions width x height
+    with the dirt dirt_amount on each tile.
+    
+    num_robots: an int (num_robots > 0)
+    speed: a float (speed > 0)
+    capacity: an int (capacity >0)
+    width: an int (width > 0)
+    height: an int (height > 0)
+    dirt_amount: an int
+    min_coverage: a float (0 <= min_coverage <= 1.0)
+    num_trials: an int (num_trials > 0)
+    robot_type: class of robot to be instantiated (e.g. StandardRobot or
+                FaultyRobot)
+    """
+    raise NotImplementedError
+
+
+# print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 5, 5, 3, 1.0, 50, StandardRobot)))
+# print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 10, 10, 3, 0.8, 50, StandardRobot)))
+# print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 10, 10, 3, 0.9, 50, StandardRobot)))
+# print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 20, 20, 3, 0.5, 50, StandardRobot)))
+# print ('avg time steps: ' + str(run_simulation(3, 1.0, 1, 20, 20, 3, 0.5, 50, StandardRobot)))
+
+# === Problem 6
+#
+# ANSWER THE FOLLOWING QUESTIONS:
+#
+# 1)How does the performance of the two robot types compare when cleaning 80%
+#       of a 20x20 room?
+#
+#
+# 2) How does the performance of the two robot types compare when two of each
+#       robot cleans 80% of rooms with dimensions 
+#       10x30, 20x15, 25x12, and 50x6?
+#
+#
+
+def show_plot_compare_strategies(title, x_label, y_label):
+    """
+    Produces a plot comparing the two robot strategies in a 20x20 room with 80%
+    minimum coverage.
+    """
+    num_robot_range = range(1, 11)
+    times1 = []
+    times2 = []
+    for num_robots in num_robot_range:
+        print ("Plotting", num_robots, "robots...")
+        times1.append(run_simulation(num_robots, 1.0, 1, 20, 20, 3, 0.8, 20, StandardRobot))
+        times2.append(run_simulation(num_robots, 1.0, 1, 20, 20, 3, 0.8, 20, FaultyRobot))
+    pylab.plot(num_robot_range, times1)
+    pylab.plot(num_robot_range, times2)
+    pylab.title(title)
+    pylab.legend(('StandardRobot', 'FaultyRobot'))
+    pylab.xlabel(x_label)
+    pylab.ylabel(y_label)
+    pylab.show()
+    
+def show_plot_room_shape(title, x_label, y_label):
+    """
+    Produces a plot showing dependence of cleaning time on room shape.
+    """
+    aspect_ratios = []
+    times1 = []
+    times2 = []
+    for width in [10, 20, 25, 50]:
+        height = 300/width
+        print ("Plotting cleaning time for a room of width:", width, "by height:", height)
+        aspect_ratios.append(float(width) / height)
+        times1.append(run_simulation(2, 1.0, 1, width, height, 3, 0.8, 200, StandardRobot))
+        times2.append(run_simulation(2, 1.0, 1, width, height, 3, 0.8, 200, FaultyRobot))
+    pylab.plot(aspect_ratios, times1)
+    pylab.plot(aspect_ratios, times2)
+    pylab.title(title)
+    pylab.legend(('StandardRobot', 'FaultyRobot'))
+    pylab.xlabel(x_label)
+    pylab.ylabel(y_label)
+    pylab.show()
+
+
+#show_plot_compare_strategies('Time to clean 80% of a 20x20 room, for various />
+#numbers of robots','Number of robots','Time / steps')
+#show_plot_room_shape('Time to clean 80% of a 300-tile room for various room />
+#shapes','Aspect Ratio', 'Time / steps')
