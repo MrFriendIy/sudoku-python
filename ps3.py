@@ -116,7 +116,10 @@ class RectangularRoom(object):
         Note: The amount of dirt on each tile should be NON-NEGATIVE.
               If the capacity exceeds the amount of dirt on the tile, mark it as 0.
         """
-        self.tiles[math.floor(pos.get_x()), math.floor(pos.get_y())] -= capacity
+        if self.tiles[math.floor(pos.get_x()), math.floor(pos.get_y())] - capacity >= 0:
+            self.tiles[math.floor(pos.get_x()), math.floor(pos.get_y())] -= capacity
+        else:
+            self.tiles[math.floor(pos.get_x()), math.floor(pos.get_y())] = 0
 
     def is_tile_cleaned(self, m, n):
         """
@@ -218,6 +221,8 @@ class Robot(object):
         self.speed = speed
         self.cap = capacity
         self.angle = random.uniform(0.0, 360.0)
+        # random_pos = room.get_random_position()
+        # if room.is_position_valid(random_pos)
         self.pos = room.get_random_position()
 
     def get_robot_position(self):
@@ -286,7 +291,7 @@ class EmptyRoom(RectangularRoom):
         """
         Returns: a Position object; a valid random position (inside the room).
         """
-        return(Position(random.uniform(0.0, self.height+0.999), random.uniform(0.0, self.width+0.999)))
+        return(Position(random.uniform(0.0, self.width), random.uniform(0.0, self.height)))
 
 
 
@@ -442,9 +447,12 @@ class FaultyRobot(Robot):
         StandardRobot at this time-step (checking if it can move to a new position,
         move there if it can, pick a new direction and stay stationary if it can't)
         """
-        raise NotImplementedError
-        
-    
+        new_position = self.pos.get_new_position(self.angle, self.speed)
+        if self.gets_faulty() or not self.room.is_position_valid(new_position):
+            self.angle = random.uniform(0.0, 360.0) 
+        else:
+                self.pos = new_position
+                self.room.clean_tile_at_position(self.pos, self.cap)
 #test_robot_movement(FaultyRobot, EmptyRoom)
 
 # === Problem 5
@@ -469,9 +477,76 @@ def run_simulation(num_robots, speed, capacity, width, height, dirt_amount, min_
     robot_type: class of robot to be instantiated (e.g. StandardRobot or
                 FaultyRobot)
     """
-    raise NotImplementedError
+
+   
+    # checks to see if the trials should be animated. comment out this line to get rid of the animated check 
+    # animated = input('animate? y or n or d (default settings)')
+    # uses a try except to check if the line assigning animated has been commented out
+    try:
+        animated == 'y'
+    except:
+        animated = 'n'
+    # gets values for animation
+    if animated == 'y':
+        if input('is furnished, t or f') == 't':
+            is_furnished = True
+        else:
+            is_furnished = False
+        delay = float(input('delay. float. default is 0.03. higher number will go slower'))
+        anim = ps3_visualize.RobotVisualization(num_robots, width, height, is_furnished, delay)
+    elif animated == 'd':
+        is_furnished = False
+        delay = 0.03
+        anim = ps3_visualize.RobotVisualization(num_robots, width, height, is_furnished, delay)
+        animated = 'y'
+    number_of_trials = []
+    # the main loop which runs over the code for each individual trial
+    for i in range(num_trials):
+        room = EmptyRoom(width, height, dirt_amount)
+        if animated == 'y':
+            if is_furnished == True:
+                room = FurnishedRoom(width, height, dirt_amount)
+                room.add_furniture_to_room()
+        time = 0
+        robot_list = []
+        for i in range(num_robots):
+            robot_list += [robot_type(room, speed, capacity)]
+        # the code for each trial. they will continue until the room is sufficently clean
+        while room.get_num_cleaned_tiles() / room.get_num_tiles() < min_coverage:
+            for robot in robot_list:
+                robot.update_position_and_clean()
+                room = robot.room
+            time += 1
+            if animated == 'y':
+                anim.update(room, robot_list)
+        number_of_trials += [time]
+    if animated == 'y':
+        anim.done()
+    # returns the average time ticks per trial
+    return(sum(number_of_trials)/len(number_of_trials))
+
+def test_random_prob(num_trials):
+    good = 0
+    trials_list = []
+    trials = 0
+    for i in range(num_trials):
+        trials += 1
+        end = 8
+        random_number = random.uniform(0.0, 360.0)
+        if random_number > 40 and random_number < 140:
+            good += 1
+        if good == end:
+            trials_list += [trials]
+    return(sum(trials_list)/len(trials_list))
 
 def test_work():
+    # random.seed()
+    
+    # print(run_simulation(1, 1, 1, 4, 4, 2, 0.5, 2, StandardRobot))
+
+    
+    # print(test_random_prob(1000))
+    
     recroomt1 = RectangularRoom(3,4,2)
     eroomt1 = EmptyRoom(3,4,2)
     cleanroom = EmptyRoom(5,5,0)
@@ -482,6 +557,8 @@ def test_work():
     srobott2 = StandardRobot(eroomt1, 2, 1)    
     srobott3 = StandardRobot(cleanroom, 1, 2)
     srobott4 = StandardRobot(froomt1, 1, 1)
+    flrobott1 = FaultyRobot(eroomt1, 1, 1)
+    flrobott2 = FaultyRobot(froomt1, 1, 1)
     
     position_test1 = Position(1.7,2.1)
     position_test2 = Position(2.0,3.9)
@@ -491,6 +568,9 @@ def test_work():
     
     # print(recroomt1.tiles)
     # print(recroomt1.clean_tile_at_position(position_test1, 1))
+    # print(cleanroom.tiles)
+    # print(cleanroom.clean_tile_at_position(position_test1, 1))
+    # print(cleanroom.tiles)
     # recroomt1.clean_tile_at_position(position_test2, 2)
     # recroomt1.clean_tile_at_position(position_test3, 1)
     # print(recroomt1.is_tile_cleaned(0, 0))
@@ -529,29 +609,43 @@ def test_work():
     
     # print(srobott1.update_position_and_clean())
     # print(srobott2.update_position_and_clean())
-    print(srobott3.update_position_and_clean())
+    # print(srobott3.update_position_and_clean())
     # print(srobott4.update_position_and_clean())
+    
+    # print(flrobott1.pos, flrobott1.angle)
+    # flrobott1.update_position_and_clean()
+    # print(flrobott1.pos, flrobott1.angle)
+    
+    # standard = run_simulation(1, 1, 1, 30, 6, 2, 0.8, 30, StandardRobot)
+    # faulty = run_simulation(1, 1, 1, 30, 6, 2, 0.8, 30, FaultyRobot)
+    # print('standart:', standard, 'faulty:', faulty, '% increase:', (faulty - standard)/standard*100, '%')
+    
 if __name__ == '__main__':
     test_work()
-# print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 5, 5, 3, 1.0, 50, StandardRobot)))
-# print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 10, 10, 3, 0.8, 50, StandardRobot)))
-# print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 10, 10, 3, 0.9, 50, StandardRobot)))
-# print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 20, 20, 3, 0.5, 50, StandardRobot)))
-# print ('avg time steps: ' + str(run_simulation(3, 1.0, 1, 20, 20, 3, 0.5, 50, StandardRobot)))
+# print ('5x5, 100, avg time steps: ' + str(run_simulation(1, 1.0, 1, 5, 5, 3, 1.0, 50, StandardRobot)))
+# print ('10x10, 80, avg time steps: ' + str(run_simulation(1, 1.0, 1, 10, 10, 3, 0.8, 50, StandardRobot)))
+# print ('10x10, 90, avg time steps: ' + str(run_simulation(1, 1.0, 1, 10, 10, 3, 0.9, 50, StandardRobot)))
+# print ('20x20, 50, avg time steps: ' + str(run_simulation(1, 1.0, 1, 20, 20, 3, 0.5, 50, StandardRobot)))
+# print ('20x20, 50, 3r, avg time steps: ' + str(run_simulation(3, 1.0, 1, 20, 20, 3, 0.5, 50, StandardRobot)))
 
 # === Problem 6
 #
 # ANSWER THE FOLLOWING QUESTIONS:
+# NOTE: I WAS UNABLE TO RUN THE SIMULATION AT THE END OF THE CODE LIKE THE INSTRUCTIONS SAID. THE PYLAB WINDOW
+# CRASHED. INSTEAD, I JUST RAN THE TESTS ON MY OWN AND RECORDED THE DATA
 #
 # 1)How does the performance of the two robot types compare when cleaning 80%
 #       of a 20x20 room?
-#
+#   The standard robot is about 20% more effecient. with 1 robot, 1 speed, 2 dirt value, and 1 capacity, 
+#   the standard got 1436.9 ticks on average, while the faulty got 1746.57, or a 21.55% increase
 #
 # 2) How does the performance of the two robot types compare when two of each
 #       robot cleans 80% of rooms with dimensions 
 #       10x30, 20x15, 25x12, and 50x6?
-#
-#
+#   10x30: standard:1140.4, faulty:1430.27, increase of 25.42%
+#   20x15: standard:1112.0, faulty:1355.37, increase of 21.89%
+#   30x6: standard:729.37, faulty:980.27, increase of 34.4%
+#   
 
 def show_plot_compare_strategies(title, x_label, y_label):
     """
@@ -581,7 +675,7 @@ def show_plot_room_shape(title, x_label, y_label):
     times1 = []
     times2 = []
     for width in [10, 20, 25, 50]:
-        height = 300/width
+        height = int(300/width)
         print ("Plotting cleaning time for a room of width:", width, "by height:", height)
         aspect_ratios.append(float(width) / height)
         times1.append(run_simulation(2, 1.0, 1, width, height, 3, 0.8, 200, StandardRobot))
@@ -595,7 +689,7 @@ def show_plot_room_shape(title, x_label, y_label):
     pylab.show()
 
 
-#show_plot_compare_strategies('Time to clean 80% of a 20x20 room, for various />
-#numbers of robots','Number of robots','Time / steps')
-#show_plot_room_shape('Time to clean 80% of a 300-tile room for various room />
-#shapes','Aspect Ratio', 'Time / steps')
+# show_plot_compare_strategies('Time to clean 80% of a 20x20 room, for various \
+#                               numbers of robots','Number of robots','Time / steps')
+# show_plot_room_shape('Time to clean 80% of a 300-tile room for various room \
+#                       shapes','Aspect Ratio', 'Time / steps')
