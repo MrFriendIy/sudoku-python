@@ -542,7 +542,7 @@ def test_random_prob(num_trials):
 def test_work():
     # random.seed()
     
-    # print(run_simulation(1, 1, 1, 4, 4, 2, 0.5, 2, StandardRobot))
+    print(run_simulation(1, 1, 1, 4, 4, 2, 0.5, 2, StandardRobot))
 
     
     # print(test_random_prob(1000))
