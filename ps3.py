@@ -373,58 +373,7 @@ class FurnishedRoom(RectangularRoom):
                 end = True
         return(ran_pos)
 
-def test_work():
-    recroomt1 = RectangularRoom(3,4,2)
-    eroomt1 = EmptyRoom(3,4,2)
-    froomt1 = FurnishedRoom(3,4,2)
-    erobott1 = Robot(eroomt1, 1, 1)
-    frobott1 = Robot(froomt1, 1, 1)
 
-    position_test1 = Position(1.7,2.1)
-    position_test2 = Position(2.0,3.9)
-    position_test3 = Position(0.0,0.0)
-    position_test4 = Position(4.0,0.0)
-    position_test5 = Position(-0.9,0.0)
-    
-    # print(recroomt1.tiles)
-    # print(recroomt1.clean_tile_at_position(position_test1, 1))
-    # recroomt1.clean_tile_at_position(position_test2, 2)
-    # recroomt1.clean_tile_at_position(position_test3, 1)
-    # print(recroomt1.is_tile_cleaned(0, 0))
-    # print(recroomt1.is_tile_cleaned(1, 2))
-    # print(recroomt1.is_tile_cleaned(2, 3))
-    # print(recroomt1.get_num_cleaned_tiles())
-    # print(recroomt1.is_position_in_room(position_test1))
-    # print(recroomt1.is_position_in_room(position_test2))
-    # print(recroomt1.is_position_in_room(position_test4))
-    # print(recroomt1.get_dirt_amount(2, 3))
-    # print(recroomt1.get_dirt_amount(0, 0))
-    
-    # print(robott1)
-    # print(robott1.get_robot_position())
-    # print(robott1.get_robot_direction())
-    # robott1.set_robot_position(position_test1)
-    # print(robott1.get_robot_position())
-    # robott1.set_robot_direction(275.679)
-    # print(robott1.get_robot_direction())
-    
-    # print(eroomt1.get_num_tiles())
-    # print(eroomt1.is_position_in_room(position_test1))
-    # print(eroomt1.is_position_in_room(position_test4))
-    # print(eroomt1.get_random_position())
-    
-    # froomt1.add_furniture_to_room()
-    # print(froomt1.tiles)
-    # print(froomt1.furniture_tiles)
-    # print(froomt1.is_tile_furnished(1,1))
-    # print(froomt1.is_position_furnished(position_test1))
-    # print(froomt1.is_position_valid(position_test1), position_test1)
-    # print(froomt1.is_position_valid(position_test2), position_test2)
-    # print(froomt1.is_position_valid(position_test4), position_test4)
-    # print(froomt1.get_num_tiles())
-    # print(froomt1.get_random_position())
-if __name__ == '__main__':
-    test_work()
 
 # === Problem 3
 class StandardRobot(Robot):
@@ -443,11 +392,17 @@ class StandardRobot(Robot):
         rotate once to a random new direction, and stay stationary) and clean the dirt on the tile
         by its given capacity. 
         """
-        raise NotImplementedError
-
+        new_position = self.pos.get_new_position(self.angle, self.speed)
+        if self.room.is_position_valid(new_position):
+            self.pos = new_position
+            self.room.clean_tile_at_position(self.pos, self.cap)
+        else:
+            self.angle = random.uniform(0.0, 360.0)
 # Uncomment this line to see your implementation of StandardRobot in action!
-#test_robot_movement(StandardRobot, EmptyRoom)
-#test_robot_movement(StandardRobot, FurnishedRoom)
+# test_robot_movement(StandardRobot, EmptyRoom)
+# test_robot_movement(StandardRobot, FurnishedRoom)
+
+
 
 # === Problem 4
 class FaultyRobot(Robot):
@@ -516,7 +471,68 @@ def run_simulation(num_robots, speed, capacity, width, height, dirt_amount, min_
     """
     raise NotImplementedError
 
-
+def test_work():
+    recroomt1 = RectangularRoom(3,4,2)
+    eroomt1 = EmptyRoom(3,4,2)
+    cleanroom = EmptyRoom(5,5,0)
+    froomt1 = FurnishedRoom(3,4,2)
+    erobott1 = Robot(eroomt1, 1, 1)
+    frobott1 = Robot(froomt1, 1, 1)
+    srobott1 = StandardRobot(eroomt1, 1, 1)
+    srobott2 = StandardRobot(eroomt1, 2, 1)    
+    srobott3 = StandardRobot(cleanroom, 1, 2)
+    srobott4 = StandardRobot(froomt1, 1, 1)
+    
+    position_test1 = Position(1.7,2.1)
+    position_test2 = Position(2.0,3.9)
+    position_test3 = Position(0.0,0.0)
+    position_test4 = Position(4.0,0.0)
+    position_test5 = Position(-0.9,0.0)
+    
+    # print(recroomt1.tiles)
+    # print(recroomt1.clean_tile_at_position(position_test1, 1))
+    # recroomt1.clean_tile_at_position(position_test2, 2)
+    # recroomt1.clean_tile_at_position(position_test3, 1)
+    # print(recroomt1.is_tile_cleaned(0, 0))
+    # print(recroomt1.is_tile_cleaned(1, 2))
+    # print(recroomt1.is_tile_cleaned(2, 3))
+    # print(recroomt1.get_num_cleaned_tiles())
+    # print(recroomt1.is_position_in_room(position_test1))
+    # print(recroomt1.is_position_in_room(position_test2))
+    # print(recroomt1.is_position_in_room(position_test4))
+    # print(recroomt1.get_dirt_amount(2, 3))
+    # print(recroomt1.get_dirt_amount(0, 0))
+    
+    # print(robott1)
+    # print(robott1.get_robot_position())
+    # print(robott1.get_robot_direction())
+    # robott1.set_robot_position(position_test1)
+    # print(robott1.get_robot_position())
+    # robott1.set_robot_direction(275.679)
+    # print(robott1.get_robot_direction())
+    
+    # print(eroomt1.get_num_tiles())
+    # print(eroomt1.is_position_in_room(position_test1))
+    # print(eroomt1.is_position_in_room(position_test4))
+    # print(eroomt1.get_random_position())
+    
+    # froomt1.add_furniture_to_room()
+    # print(froomt1.tiles)
+    # print(froomt1.furniture_tiles)
+    # print(froomt1.is_tile_furnished(1,1))
+    # print(froomt1.is_position_furnished(position_test1))
+    # print(froomt1.is_position_valid(position_test1), position_test1)
+    # print(froomt1.is_position_valid(position_test2), position_test2)
+    # print(froomt1.is_position_valid(position_test4), position_test4)
+    # print(froomt1.get_num_tiles())
+    # print(froomt1.get_random_position())
+    
+    # print(srobott1.update_position_and_clean())
+    # print(srobott2.update_position_and_clean())
+    print(srobott3.update_position_and_clean())
+    # print(srobott4.update_position_and_clean())
+if __name__ == '__main__':
+    test_work()
 # print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 5, 5, 3, 1.0, 50, StandardRobot)))
 # print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 10, 10, 3, 0.8, 50, StandardRobot)))
 # print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 10, 10, 3, 0.9, 50, StandardRobot)))
