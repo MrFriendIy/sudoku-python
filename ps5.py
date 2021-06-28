@@ -225,7 +225,7 @@ def evaluate_models_on_training(x, y, models):
             order = len(model)
             for coef in model:
                 order -= 1
-                model_sum += coef * x_val_equat ** order
+                model_sum += coef * (x_val_equat+x[0]) ** order
             model_at_x.append(model_sum)
         estimates.append(model_at_x)
     R2_list = []
@@ -234,7 +234,7 @@ def evaluate_models_on_training(x, y, models):
         R2_list.append(r_squared(y, estimates[model_num]))
         se_ov_slope_list.append(se_over_slope(x, y, estimates[model_num], models[model_num]))
 
-    print(estimates)
+    # print(estimates)
     # print(R2_list)
     # print(se_ov_slope_list)
     for est in range(len(estimates)):
@@ -272,6 +272,25 @@ def gen_cities_avg(climate, multi_cities, years):
         yearly_temps = pylab.append(yearly_temps, avg_temp)
     return(yearly_temps)
 
+
+
+def moving_average(y, window_length):
+    """
+    Compute the moving average of y with specified window length.
+
+    Args:
+        y: an 1-d pylab array with length N, representing the y-coordinates of
+            the N sample points
+        window_length: an integer indicating the window length for computing
+            moving average
+
+    Returns:
+        an 1-d pylab array with the same length as y storing moving average of
+        y-coordinates of the N sample points
+    """
+    
+
+
 def test():
     xarray0 = pylab.array([1961, 1962, 1963])
     yarray0 = pylab.array([-4.4, -5.5, -6.6])
@@ -302,33 +321,23 @@ def test():
     climate1 = Climate('data.csv')
     
     years1 = range(2010, 2016)
+    years2 = range(1961, 2010)
     
     cities1 = CITIES
     
-    # print(generate_models(hxarray1, hyarray1, [2]))
+    hxarray2 = pylab.array(years2)
+    hyarray2 = pylab.array([-2.5,-5.8,2.75,0.85,1.1,2.8,1.1,-12.75,-3.05,-6.1,-0.25,9.45,-1.9,-1.9,
+                            5.8,-6.35,-0.85,-8.1,-3.9,-1.65,-7.5,-11.1,7.8,3.3,-5.,4.15,3.35,-5.3,
+                            -0.3,5.8,1.95,5.55,-3.35,-6.1,-1.35,-1.65,2.75,5.85,-2.5,9.2,-2.5,6.7,
+                            3.9,-12.8,6.1,6.1,0.25,6.95,-2.2])
+    
+    # print(generate_models(hxarray2, hyarray2, [1]))
     # print(r_squared(hyarray1, hest1[0]))
     # print(evaluate_models_on_training(hxarray1, hyarray1, [hmod1[0], hmod2[0]]))
-    print(gen_cities_avg(climate1, cities1, years1))
+    # print(gen_cities_avg(climate1, cities1, years1))
 
 if __name__ == '__main__':
     test()
-
-def moving_average(y, window_length):
-    """
-    Compute the moving average of y with specified window length.
-
-    Args:
-        y: an 1-d pylab array with length N, representing the y-coordinates of
-            the N sample points
-        window_length: an integer indicating the window length for computing
-            moving average
-
-    Returns:
-        an 1-d pylab array with the same length as y storing moving average of
-        y-coordinates of the N sample points
-    """
-    # TODO
-    pass
 
 def rmse(y, estimated):
     """
@@ -393,14 +402,29 @@ def evaluate_models_on_testing(x, y, models):
 
 if __name__ == '__main__':
 
-    pass 
+    
 
     # Part A.4
-    # TODO: replace this line with your code
-
+    sample_climate = Climate('data.csv')
+    sample_years = pylab.array(TRAINING_INTERVAL)
+    sample_temp = pylab.array([])
+    for year in sample_years:
+       sample_temp = pylab.append(sample_temp, sample_climate.get_daily_temp('NEW YORK', 1, 10, year))
+    temp_model = generate_models(sample_years, sample_temp, [1])
+    # evaluate_models_on_training(sample_years, sample_temp, temp_model)
+    sample_yearly_temp = pylab.array([])
+    for year in sample_years:
+        avg_temp = 0
+        avg_temp += sum(sample_climate.get_yearly_temp('NEW YORK', year))
+        avg_temp = avg_temp / len(sample_climate.get_yearly_temp('NEW YORK', year))
+        sample_yearly_temp = pylab.append(sample_yearly_temp, avg_temp)    
+    yearly_temp_model = generate_models(sample_years, sample_yearly_temp, [1])
+    # evaluate_models_on_training(sample_years, sample_yearly_temp, yearly_temp_model)
     # Part B
-    # TODO: replace this line with your code
-
+    nat_avg = gen_cities_avg(sample_climate, CITIES, sample_years)
+    nat_mod = generate_models(sample_years, nat_avg, [1])
+    evaluate_models_on_training(sample_years, nat_avg, nat_mod)
+    
     # Part C
     # TODO: replace this line with your code
 
