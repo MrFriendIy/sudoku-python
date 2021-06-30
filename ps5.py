@@ -288,8 +288,23 @@ def moving_average(y, window_length):
         an 1-d pylab array with the same length as y storing moving average of
         y-coordinates of the N sample points
     """
+    # [-1.5, 1.5, -3.0, 3.0, -4.5, 4.5]
+    # [-1.5, 0, -.75, 0, -.75, 0]
+    temporary_avg_array = pylab.array([])
+    moving_avg = pylab.array([])
+    # this feels sloppy. I might try and make a better version later if I can think of one
+    # I can't think of any good names for my counting variables, so I am using letters
+    for i in range(len(y)):
+        temporary_avg_array_2nd = pylab.array([])
+        if i < window_length:
+            temporary_avg_array = pylab.append(temporary_avg_array, y[i])
+            moving_avg = pylab.append(moving_avg, sum(temporary_avg_array) / (i+1))
+        else:
+            for c in range(window_length):
+                temporary_avg_array_2nd=pylab.append(temporary_avg_array_2nd,y[c+i-(window_length-1)])
+            moving_avg = pylab.append(moving_avg, sum(temporary_avg_array_2nd)/window_length)
+    return(moving_avg)                        
     
-
 
 def test():
     xarray0 = pylab.array([1961, 1962, 1963])
@@ -330,11 +345,45 @@ def test():
                             5.8,-6.35,-0.85,-8.1,-3.9,-1.65,-7.5,-11.1,7.8,3.3,-5.,4.15,3.35,-5.3,
                             -0.3,5.8,1.95,5.55,-3.35,-6.1,-1.35,-1.65,2.75,5.85,-2.5,9.2,-2.5,6.7,
                             3.9,-12.8,6.1,6.1,0.25,6.95,-2.2])
+    mavgarray1 = pylab.array([10, 20, 30, 40, 50]) 
+    cr1 = pylab.array([10, 15, 20, 30, 40,])
+    mavgarray2 = pylab.array([15.643163731245922, 15.386921069797776, 15.502263535551206, 
+                              15.302244340359094, 15.542498369210692, 15.494872798434434, 
+                              15.613594259621657, 15.531700494405415, 15.738845401174165, 
+                              15.875512067840836, 15.898095238095241, 15.854709862086908, 
+                              16.183072407045007, 16.152120026092625, 16.03287671232877, 
+                              15.733359354670826, 16.199295499021527, 15.924579256360072, 
+                              15.996079582517941, 16.173874577153263, 16.353333333333335, 
+                              16.000965427266802, 16.224611872146117, 16.142252146760345, 
+                              15.916053489889102, 16.509360730593606, 16.459595564253096, 
+                              16.248250065053348, 16.195955642530983, 16.969067188519247, 
+                              16.861969993476844, 16.44521857923498, 16.393529028049578, 
+                              16.69698630136986, 16.715864318330073, 16.116770752016656, 
+                              16.37011741682975, 16.978982387475536, 16.580358773646445, 
+                              16.295225084569353, 16.591624266144812, 16.65839530332681, 
+                              16.432283105022826, 16.553987769971375, 16.72510110893673, 
+                              17.071343770384868, 16.825101108936725, 16.51740827478532, 
+                              16.514598825831698])
+    mavgarray3 = pylab.array([1, 2, 3, 4, 5, 6, 7]) 
+    cr3 = pylab.array([1, 1.5, 2, 3, 4, 5, 6])
+    mavgarray4 = pylab.array([-1.5, 1.5, -3.0, 3.0, -4.5, 4.5]) 
+    cr4 = pylab.array([-1.5, 0, -.75, 0, -.75, 0])
+    
+    
+    
+    
+    
     
     # print(generate_models(hxarray2, hyarray2, [1]))
     # print(r_squared(hyarray1, hest1[0]))
     # print(evaluate_models_on_training(hxarray1, hyarray1, [hmod1[0], hmod2[0]]))
     # print(gen_cities_avg(climate1, cities1, years1))
+    # print(moving_average(mavgarray1, 3), moving_average(mavgarray1, 3) == cr1, 
+    #       sum(moving_average(mavgarray1, 3)) == sum(cr1))
+    # print(moving_average(mavgarray4, 2), moving_average(mavgarray4, 2) == cr4,
+    #       sum(moving_average(mavgarray4, 2)) == sum(cr4))
+    # print(moving_average(mavgarray2, 5))
+    
 
 if __name__ == '__main__':
     test()
@@ -423,10 +472,12 @@ if __name__ == '__main__':
     # Part B
     nat_avg = gen_cities_avg(sample_climate, CITIES, sample_years)
     nat_mod = generate_models(sample_years, nat_avg, [1])
-    evaluate_models_on_training(sample_years, nat_avg, nat_mod)
+    # evaluate_models_on_training(sample_years, nat_avg, nat_mod)
     
     # Part C
-    # TODO: replace this line with your code
+    # print(list(nat_avg))
+    mov_avg = moving_average(nat_avg, 5)
+    evaluate_models_on_training(sample_years, mov_avg,generate_models(sample_years, mov_avg, [1]))
 
     # Part D.2
     # TODO: replace this line with your code
