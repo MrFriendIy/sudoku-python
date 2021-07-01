@@ -7,6 +7,8 @@
 import pylab
 import re
 import random
+import warnings
+
 
 # cities in our weather data
 CITIES = [
@@ -219,24 +221,24 @@ def evaluate_models_on_training(x, y, models):
     """
     estimates = []
     for model in models:
-        model_at_x = []
+        model_at_x = pylab.array([])
         for x_val_equat in range(len(x)):
             model_sum = 0
             order = len(model)
             for coef in model:
                 order -= 1
-                model_sum += coef * (x_val_equat+x[0]) ** order
-            model_at_x.append(model_sum)
+                # this causes issues for higher degree models. This is probably due to it rounding 
+                # incorrectly. This can be solved by replacing the x[0] with 1, but this causes 
+                # other issues, more likely to occure than you actually needing to find a degree 14
+                # model, so I will leave it as is.
+                model_sum += coef * (x_val_equat+int(x[0])) ** order
+            model_at_x = pylab.append(model_at_x, model_sum)
         estimates.append(model_at_x)
     R2_list = []
     se_ov_slope_list = []
     for model_num in range(len(models)):
         R2_list.append(r_squared(y, estimates[model_num]))
         se_ov_slope_list.append(se_over_slope(x, y, estimates[model_num], models[model_num]))
-
-    # print(estimates)
-    # print(R2_list)
-    # print(se_ov_slope_list)
     for est in range(len(estimates)):
         pylab.plot(x, y, 'b.')
         pylab.plot(x, estimates[est], 'r')
@@ -244,10 +246,88 @@ def evaluate_models_on_training(x, y, models):
         pylab.plt.ylabel('deg Celsius')
         pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1))
         pylab.show()
+ 
+
+# evaluate_models_on_training(pylab.array(range(3))+1, pylab.array(range(3))+1, 
+#                             generate_models(pylab.array(range(3))+1, pylab.array(range(3))+1, [20]))
+        
 
 
+# def training_eval_tester():
+    ar_dic = {}
+    for i in range(10):
+        ar = pylab.array(range(i))+1
+        ar_dic[i] = [ar]
+    del ar_dic[0]
+    del ar_dic[1]
+    for k in ar_dic:
+        R2 = 1
+        count = 1
+        while R2 == 1:
+            if count == 50: break
+            models = generate_models(pylab.array(range(k))+1, ar_dic[k][0], [count])
+            if k < 9:
+                print(generate_models(pylab.array(range(k))+1, ar_dic[k][0], [count]))
+                print(pylab.array(range(k))+1, ar_dic[k][0], [count])
+            estimates = []
+            for model in models:
+                model_at_x = pylab.array([])
+                for x_val_equat in range(k):
+                    model_sum = 0
+                    order = len(model)
+                    for coef in model:
+                        order -= 1
+                        model_sum += coef * (x_val_equat+1) ** order
+                    model_at_x = pylab.append(model_at_x, model_sum)
+                estimates.append(model_at_x)
+            count += 1
+            R2 = r_squared(ar_dic[k][0], estimates[0])
+            # if R2 != 1 or count == 49:
+            #     print(ar_dic[k])
+            #     print(R2)
+        if R2 != 1:
+            ar_dic[k].append(count)
+    return(ar_dic)
+
+# if __name__=='__main__':
+#     print(training_eval_tester())
+    
+# print('gen mod:', generate_models(pylab.array(range(8))+1, pylab.array(range(8))+1, [49]))
+
+# print( pylab.array([ 2.34939159e-46,  1.83776774e-45,  1.43217531e-44,  1.11109876e-43,
+#         8.57352738e-43,  6.57213700e-42,  4.99725475e-41,  3.76143873e-40,
+#         2.79492535e-39,  2.04207764e-38,  1.45854514e-37,  1.00899317e-36,
+#         6.65287141e-36,  4.05041068e-35,  2.10457173e-34,  6.73982519e-34,
+#        -3.53538488e-33, -1.06691020e-31, -1.53652839e-30, -1.81805601e-29,
+#        -1.95545619e-28, -1.98342129e-27, -1.92932129e-26, -1.81477024e-25,
+#        -1.65689014e-24, -1.46933563e-23, -1.26313041e-22, -1.04735473e-21,
+#        -8.29714373e-21, -6.17011126e-20, -4.15524859e-19, -2.31303990e-18,
+#        -7.03443222e-18,  6.13865765e-17,  1.58151725e-15,  2.14980014e-14,
+#         2.28668920e-13,  1.99383140e-12,  1.32871710e-11,  4.29900386e-11,
+#        -4.65689368e-10, -1.03898309e-08, -9.84392850e-08, -2.37269190e-07,
+#         6.94132346e-06,  6.62907015e-05, -7.89946271e-04,  2.65683612e-03,
+#         9.96379829e-01,  1.68039515e-03]) == pylab.array([ 2.34939159e-46,  1.83776774e-45,  1.43217531e-44,  1.11109876e-43,
+#         8.57352738e-43,  6.57213700e-42,  4.99725475e-41,  3.76143873e-40,
+#         2.79492535e-39,  2.04207764e-38,  1.45854514e-37,  1.00899317e-36,
+#         6.65287141e-36,  4.05041068e-35,  2.10457173e-34,  6.73982519e-34,
+#        -3.53538488e-33, -1.06691020e-31, -1.53652839e-30, -1.81805601e-29,
+#        -1.95545619e-28, -1.98342129e-27, -1.92932129e-26, -1.81477024e-25,
+#        -1.65689014e-24, -1.46933563e-23, -1.26313041e-22, -1.04735473e-21,
+#        -8.29714373e-21, -6.17011126e-20, -4.15524859e-19, -2.31303990e-18,
+#        -7.03443222e-18,  6.13865765e-17,  1.58151725e-15,  2.14980014e-14,
+#         2.28668920e-13,  1.99383140e-12,  1.32871710e-11,  4.29900386e-11,
+#        -4.65689368e-10, -1.03898309e-08, -9.84392850e-08, -2.37269190e-07,
+#         6.94132346e-06,  6.62907015e-05, -7.89946271e-04,  2.65683612e-03,
+#         9.96379829e-01,  1.68039515e-03]))
 
 
+# print(r_squared(pylab.array([1.5,1.5]),pylab.array([1.5,1.5])))
+# print(generate_models(pylab.array([1,2]), pylab.array([1,2]), [2]))
+    
+# pylab.array([1])
+# dic = {1:[pylab.array([1])]}
+# print(pylab.array(list(dic.keys())[0]), dic[1][0])
+# print(generate_models(pylab.array(list(dic.keys())[0]), dic[1][0], [2]))
 def gen_cities_avg(climate, multi_cities, years):
     """
     Compute the average annual temperature over multiple cities.
@@ -271,7 +351,6 @@ def gen_cities_avg(climate, multi_cities, years):
         avg_temp = avg_temp / len(multi_cities) / len(climate.get_yearly_temp(city, year))
         yearly_temps = pylab.append(yearly_temps, avg_temp)
     return(yearly_temps)
-
 
 
 def moving_average(y, window_length):
@@ -305,6 +384,103 @@ def moving_average(y, window_length):
             moving_avg = pylab.append(moving_avg, sum(temporary_avg_array_2nd)/window_length)
     return(moving_avg)                        
     
+
+def rmse(y, estimated):
+
+    """
+    Calculate the root mean square error term.
+
+    Args:
+        y: an 1-d pylab array with length N, representing the y-coordinates of
+            the N sample points
+        estimated: an 1-d pylab array of values estimated by the regression
+            model
+
+    Returns:
+        a float for the root mean square error term
+    """
+    # I really tried to not use a loop here. It feels like I should be able to do it without one. But
+    # after like 45 minutes trying to figure out how it calculated the sum() function, I gave up. this
+    # works fine
+    sums = 0
+    for i in range(len(y)):
+        sums += ((y[i]-estimated[i])**2)
+    rmse_val = (sums/len(y))**0.5        
+    return(rmse_val)
+    
+
+def gen_std_devs(climate, multi_cities, years):
+            
+    """
+    For each year in years, compute the standard deviation over the averaged yearly
+    temperatures for each city in multi_cities. 
+
+    Args:
+        climate: instance of Climate
+        multi_cities: the names of cities we want to use in our std dev calculation (list of str)
+        years: the range of years to calculate standard deviation for (list of int)
+
+    Returns:
+        a pylab 1-d array of floats with length = len(years). Each element in
+        this array corresponds to the standard deviation of the average annual 
+        city temperatures for the given cities in a given year.
+    """
+    avg_city_tmp = gen_cities_avg(climate, multi_cities, years)
+    avg_nat_temp = sum(avg_city_tmp)/len(avg_city_tmp)
+    std_devs = pylab.array([])
+    for year in years:
+        sums = 0
+        for i in range(len(avg_city_tmp)):
+            sums += (avg_city_tmp[i]-avg_nat_temp)**2
+        std_devs = pylab.append(std_devs, (sums/(len(years)))**0.5)
+    return(std_devs)
+
+def evaluate_models_on_testing(x, y, models):
+    """
+    For each regression model, compute the RMSE for this model and plot the
+    test data along with the model’s estimation.
+
+    For the plots, you should plot data points (x,y) as blue dots and your best
+    fit curve (aka model) as a red solid line. You should also label the axes
+    of this figure appropriately and have a title reporting the following
+    information:
+        degree of your regression model,
+        RMSE of your model evaluated on the given data points. 
+
+    Args:
+        x: an 1-d pylab array with length N, representing the x-coordinates of
+            the N sample points
+        y: an 1-d pylab array with length N, representing the y-coordinates of
+            the N sample points
+        models: a list containing the regression models you want to apply to
+            your data. Each model is a pylab array storing the coefficients of
+            a polynomial.
+
+    Returns:
+        None
+    """
+    estimates = []
+    for model in models:
+        model_at_x = []
+        for x_val_equat in range(len(x)):
+            model_sum = 0
+            order = len(model)
+            for coef in model:
+                order -= 1
+                model_sum += coef * (x_val_equat+x[0]) ** order
+            model_at_x.append(model_sum)
+        estimates.append(model_at_x)
+    rmse_list = []
+    for model_num in range(len(models)):
+        rmse_list.append(rmse(y, estimates[model_num]))
+    for est in range(len(estimates)):
+        pylab.plot(x, y, 'b.')
+        pylab.plot(x, estimates[est], 'r')
+        pylab.plt.xlabel('years')
+        pylab.plt.ylabel('deg Celsius')
+        pylab.plt.title('rmse:' + str(rmse_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1))
+        pylab.show()
+
 
 def test():
     xarray0 = pylab.array([1961, 1962, 1963])
@@ -368,11 +544,38 @@ def test():
     cr3 = pylab.array([1, 1.5, 2, 3, 4, 5, 6])
     mavgarray4 = pylab.array([-1.5, 1.5, -3.0, 3.0, -4.5, 4.5]) 
     cr4 = pylab.array([-1.5, 0, -.75, 0, -.75, 0])
+    rmy1 = pylab.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    rme1 = pylab.array([1, 4, 9, 16, 25, 36, 49, 64, 81])
+    cor1 = 35.8515457593
+    rmy2 = pylab.array([1, 1, 1, 1, 1, 1, 1, 1, 1])
+    rme2 = pylab.array([1, 4, 9, 16, 25, 36, 49, 64, 81])
+    cor2 = 40.513372278
     
+    rv2 = pylab.array([1,0])
+    rv3 = pylab.array([0,-1,0])
+    rv4 = pylab.array([1,0,0,-1])
+    rv5 = pylab.array([0,0,1,-1,0])
+    rv6 = pylab.array([0,1,0,1,-1, 0])
     
+    evxar1 = pylab.array([1])
+    evxar2 = pylab.array(range(2))+1
+    evxar3 = pylab.array(range(3))+1 # 20
+    evxar4 = pylab.array(range(4))+1 # 16
+    evxar5 = pylab.array(range(5))+1 # 14
+    evxar6 = pylab.array(range(6))+1 # 12
+    evyar1 = pylab.array(range(1))+1
+    evyar2 = pylab.array(range(2))+1 + rv2
+    evyar3 = pylab.array(range(3))+1 #+ rv3
+    evyar4 = pylab.array(range(4))+1 + rv4
+    evyar5 = pylab.array(range(5))+1 + rv5
+    evyar6 = pylab.array(range(6))+1 + rv6
+    evyar51 = pylab.array(range(5))**2 + rv5
+    evxar_lst = [evxar2, evxar3, evxar4, evxar5]
+    evyar_lst = [evyar2, evyar3, evyar4, evyar5]
     
-    
-    
+    climate = Climate('data.csv')
+    years = pylab.array(TRAINING_INTERVAL)
+    correct = [6.1119325255476635, 5.4102625076401125, 6.0304210441394801, 5.5823239710637846, 5.5908151965372177, 5.0347634736031583, 6.2485081784971772, 5.6752637253518703, 5.9822493041266327, 5.5376216719090898, 6.0339331562285095, 6.3471434661632733, 5.3872564859222782, 5.7528361897357705, 6.0117329392620285, 5.5922579610955854, 5.67888175212234, 5.7810899373043272, 5.7184178577664087, 5.3955809402004036, 5.1736886920193665, 5.8134229790176573, 5.1915733214759872, 5.4023314139519591, 6.7868442109830855, 5.2952870947334114, 5.6064597624296333, 5.4921097908102086, 6.1450202825415214, 6.3591021848005278, 5.4996866353350615, 5.6516820894310058, 5.7969983303071411, 5.8531227958031931, 5.2545492072097808, 6.0102701017450126, 5.5327493838092865, 5.7703034605336532, 5.0412624972468443, 5.2728662938897264, 5.0859211734722649, 5.5526426823734987, 5.8005720594546748, 5.7391426965165389, 5.5518538235632207, 5.8279562142168073, 5.9089508390885479, 5.9789908401877394, 6.5696153940105573]
     
     # print(generate_models(hxarray2, hyarray2, [1]))
     # print(r_squared(hyarray1, hest1[0]))
@@ -383,73 +586,24 @@ def test():
     # print(moving_average(mavgarray4, 2), moving_average(mavgarray4, 2) == cr4,
     #       sum(moving_average(mavgarray4, 2)) == sum(cr4))
     # print(moving_average(mavgarray2, 5))
+    # print(rmse(rmy1, rme1))
+    # for i in range(len(evxar_lst)):
+    #     evaluate_models_on_training(evxar_lst[i], evyar_lst[i], generate_models(evxar_lst[i], 
+    #                                                                             evyar_lst[i], [13]))
+    #     evaluate_models_on_training(evxar_lst[i], evyar_lst[i], generate_models(evxar_lst[i], 
+    #                                                                             evyar_lst[i], [14]))
+    #     evaluate_models_on_training(evxar_lst[i], evyar_lst[i], generate_models(evxar_lst[i], 
+    #                                                                             evyar_lst[i], [25]))
+    # evaluate_models_on_training(evxar5, evyar5, generate_models(evxar5, evyar5, [19]))
+    print(gen_std_devs(climate, ['SEATTLE'], years))
     
 
 if __name__ == '__main__':
     test()
 
-def rmse(y, estimated):
-    """
-    Calculate the root mean square error term.
 
-    Args:
-        y: an 1-d pylab array with length N, representing the y-coordinates of
-            the N sample points
-        estimated: an 1-d pylab array of values estimated by the regression
-            model
 
-    Returns:
-        a float for the root mean square error term
-    """
-    # TODO
-    pass
-
-def gen_std_devs(climate, multi_cities, years):
-    """
-    For each year in years, compute the standard deviation over the averaged yearly
-    temperatures for each city in multi_cities. 
-
-    Args:
-        climate: instance of Climate
-        multi_cities: the names of cities we want to use in our std dev calculation (list of str)
-        years: the range of years to calculate standard deviation for (list of int)
-
-    Returns:
-        a pylab 1-d array of floats with length = len(years). Each element in
-        this array corresponds to the standard deviation of the average annual 
-        city temperatures for the given cities in a given year.
-    """
-    # TODO
-    pass
-
-def evaluate_models_on_testing(x, y, models):
-    """
-    For each regression model, compute the RMSE for this model and plot the
-    test data along with the model’s estimation.
-
-    For the plots, you should plot data points (x,y) as blue dots and your best
-    fit curve (aka model) as a red solid line. You should also label the axes
-    of this figure appropriately and have a title reporting the following
-    information:
-        degree of your regression model,
-        RMSE of your model evaluated on the given data points. 
-
-    Args:
-        x: an 1-d pylab array with length N, representing the x-coordinates of
-            the N sample points
-        y: an 1-d pylab array with length N, representing the y-coordinates of
-            the N sample points
-        models: a list containing the regression models you want to apply to
-            your data. Each model is a pylab array storing the coefficients of
-            a polynomial.
-
-    Returns:
-        None
-    """
-    # TODO
-    pass
-
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
     
 
@@ -477,10 +631,16 @@ if __name__ == '__main__':
     # Part C
     # print(list(nat_avg))
     mov_avg = moving_average(nat_avg, 5)
-    evaluate_models_on_training(sample_years, mov_avg,generate_models(sample_years, mov_avg, [1]))
+    # evaluate_models_on_training(sample_years, mov_avg,generate_models(sample_years, mov_avg, [1]))
 
     # Part D.2
-    # TODO: replace this line with your code
-
+    test_years = pylab.array(TESTING_INTERVAL)
+    train_mod = generate_models(sample_years, mov_avg, [1,2,20])
+    # evaluate_models_on_training(sample_years, mov_avg, train_mod)
+    nat_avg_test = gen_cities_avg(sample_climate, CITIES, test_years)
+    mov_avg_test = moving_average(nat_avg_test, 5)
+    # evaluate_models_on_testing(test_years, mov_avg_test,train_mod)
+    
+    
     # Part E
     # TODO: replace this line with your code
