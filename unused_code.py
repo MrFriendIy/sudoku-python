@@ -41,3 +41,29 @@ Created on Thu Jul  1 16:34:41 2021
         std_devs = pylab.append(std_devs, (sums/(len(years)))**0.5)
         count += 1
     return(std_devs)
+
+    avg_city_tmp = gen_cities_avg(climate, multi_cities, years)
+    avg_nat_temp = sum(avg_city_tmp)/len(avg_city_tmp)
+    std_devs = pylab.array([])
+    for year in years:
+        sums = 0
+        for i in range(len(avg_city_tmp)):
+            sums += (avg_city_tmp[i]-avg_nat_temp)**2
+        std_devs = pylab.append(std_devs, (sums/(len(years)))**0.5)
+    return(std_devs)
+
+        if len(models[est])-1 > 4:
+            pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1)
+                            + 'standard error to slope:' + se_ov_slope_list[est])
+        elif len(models[est])-1 == 1:
+            pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + '\n' + 'linear' + 'standard error to slope:' + se_ov_slope_list[est])
+        elif len(models[est])-1 == 2:
+            pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + '\n' + 'quadratic' + 'standard error to slope:' + se_ov_slope_list[est])
+        elif len(models[est])-1 == 3:
+            pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + '\n' + 'cubic' + 'standard error to slope:' + se_ov_slope_list[est])    
+        elif len(models[est])-1 == 4:
+            pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + '\n' + 'quartic' + 'standard error to slope:' + se_ov_slope_list[est])

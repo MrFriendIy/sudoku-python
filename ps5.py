@@ -244,7 +244,21 @@ def evaluate_models_on_training(x, y, models):
         pylab.plot(x, estimates[est], 'r')
         pylab.plt.xlabel('years')
         pylab.plt.ylabel('deg Celsius')
-        pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1))
+        if len(models[est])-1 > 4:
+            pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1)
+                            + '\n')
+        elif len(models[est])-1 == 1:
+            pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + ' linear' + '\n'+ 'standard error to slope:' + str(se_ov_slope_list[est]))
+        elif len(models[est])-1 == 2:
+            pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + ' quadratic')
+        elif len(models[est])-1 == 3:
+            pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + ' cubic')
+        elif len(models[est])-1 == 4:
+            pylab.plt.title('R^2:' + str(R2_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + ' quartic')
         pylab.show()
  
 
@@ -253,7 +267,7 @@ def evaluate_models_on_training(x, y, models):
         
 
 
-# def training_eval_tester():
+def training_eval_tester():
     ar_dic = {}
     for i in range(10):
         ar = pylab.array(range(i))+1
@@ -410,7 +424,9 @@ def rmse(y, estimated):
     
 
 def gen_std_devs(climate, multi_cities, years):
-            
+    # I don't understand this question. standard devation FROM what? from the average national temp?
+    # from the temp over the entire range of years? is it the devation of the daily temps from the
+    # yearly temp? it really isn't clear.
     """
     For each year in years, compute the standard deviation over the averaged yearly
     temperatures for each city in multi_cities. 
@@ -425,15 +441,13 @@ def gen_std_devs(climate, multi_cities, years):
         this array corresponds to the standard deviation of the average annual 
         city temperatures for the given cities in a given year.
     """
-    avg_city_tmp = gen_cities_avg(climate, multi_cities, years)
-    avg_nat_temp = sum(avg_city_tmp)/len(avg_city_tmp)
-    std_devs = pylab.array([])
+    # get the average temp for each city over a given year
+    std_dev = pylab.array([])
     for year in years:
-        sums = 0
-        for i in range(len(avg_city_tmp)):
-            sums += (avg_city_tmp[i]-avg_nat_temp)**2
-        std_devs = pylab.append(std_devs, (sums/(len(years)))**0.5)
-    return(std_devs)
+        city_avg_temp = {}
+        for city in multi_cities:
+            city_avg_temp[city] = gen_cities_avg(climate, [city], [year])
+    # print(city_avg_temp)
 
 def evaluate_models_on_testing(x, y, models):
     """
@@ -479,6 +493,20 @@ def evaluate_models_on_testing(x, y, models):
         pylab.plt.xlabel('years')
         pylab.plt.ylabel('deg Celsius')
         pylab.plt.title('rmse:' + str(rmse_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1))
+        if len(models[est])-1 > 4:
+            pylab.plt.title('rmse:' + str(rmse_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1))
+        elif len(models[est])-1 == 1:
+            pylab.plt.title('rmse:' + str(rmse_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + ' linear')
+        elif len(models[est])-1 == 2:
+            pylab.plt.title('rmse:' + str(rmse_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + ' quadratic')
+        elif len(models[est])-1 == 3:
+            pylab.plt.title('rmse:' + str(rmse_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + ' cubic')
+        elif len(models[est])-1 == 4:
+            pylab.plt.title('rmse:' + str(rmse_list[est]) + '\n' + 'Degree:' + str(len(models[est])-1) 
+                            + ' quartic')
         pylab.show()
 
 
@@ -595,15 +623,15 @@ def test():
     #     evaluate_models_on_training(evxar_lst[i], evyar_lst[i], generate_models(evxar_lst[i], 
     #                                                                             evyar_lst[i], [25]))
     # evaluate_models_on_training(evxar5, evyar5, generate_models(evxar5, evyar5, [19]))
-    print(gen_std_devs(climate, ['SEATTLE'], years))
+    # print(gen_std_devs(climate, ['SEATTLE'], years),gen_std_devs(climate, ['SEATTLE'], years)==correct)
     
 
-if __name__ == '__main__':
-    test()
-
-
-
 # if __name__ == '__main__':
+#     test()
+
+
+
+if __name__ == '__main__':
 
     
 
@@ -639,8 +667,12 @@ if __name__ == '__main__':
     # evaluate_models_on_training(sample_years, mov_avg, train_mod)
     nat_avg_test = gen_cities_avg(sample_climate, CITIES, test_years)
     mov_avg_test = moving_average(nat_avg_test, 5)
-    # evaluate_models_on_testing(test_years, mov_avg_test,train_mod)
+    evaluate_models_on_testing(test_years, mov_avg_test,train_mod)
     
     
     # Part E
-    # TODO: replace this line with your code
+    # std_dev = gen_std_devs(sample_climate, CITIES, sample_years)
+    # std_mov_avg = moving_average(std_dev, 5)
+    # std_mod = generate_models(sample_years, std_dev, [1])
+    # evaluate_models_on_training(sample_years, std_dev, std_mod)
+    
