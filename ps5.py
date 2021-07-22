@@ -8,7 +8,7 @@ import pylab
 import re
 import random
 import warnings
-
+import math
 
 # cities in our weather data
 CITIES = [
@@ -444,10 +444,22 @@ def gen_std_devs(climate, multi_cities, years):
     # get the average temp for each city over a given year
     std_dev = pylab.array([])
     for year in years:
-        city_avg_temp = {}
+        city_avg_daily_temp = {}
         for city in multi_cities:
-            city_avg_temp[city] = gen_cities_avg(climate, [city], [year])
-    # print(city_avg_temp)
+            city_avg_daily_temp[city] = climate.get_yearly_temp(city, year)
+        nat_daily_avg = city_avg_daily_temp[list(city_avg_daily_temp.keys())[0]]*0
+        for city_daily_avg in city_avg_daily_temp:
+            nat_daily_avg += city_avg_daily_temp[city_daily_avg]
+        # this is an array of the daily averages across all cities
+        nat_daily_avg = nat_daily_avg/len(city_avg_daily_temp)
+        nat_year_avg = sum(nat_daily_avg)/len(nat_daily_avg)
+        std_num = 0
+        for day in nat_daily_avg:
+            std_num += ((day-nat_year_avg)**2)/(len(nat_daily_avg-1))
+        std_dev = pylab.append(std_dev, std_num**0.5)
+    return(std_dev)
+                 
+
 
 def evaluate_models_on_testing(x, y, models):
     """
@@ -601,6 +613,7 @@ def test():
     evxar_lst = [evxar2, evxar3, evxar4, evxar5]
     evyar_lst = [evyar2, evyar3, evyar4, evyar5]
     
+    
     climate = Climate('data.csv')
     years = pylab.array(TRAINING_INTERVAL)
     correct = [6.1119325255476635, 5.4102625076401125, 6.0304210441394801, 5.5823239710637846, 5.5908151965372177, 5.0347634736031583, 6.2485081784971772, 5.6752637253518703, 5.9822493041266327, 5.5376216719090898, 6.0339331562285095, 6.3471434661632733, 5.3872564859222782, 5.7528361897357705, 6.0117329392620285, 5.5922579610955854, 5.67888175212234, 5.7810899373043272, 5.7184178577664087, 5.3955809402004036, 5.1736886920193665, 5.8134229790176573, 5.1915733214759872, 5.4023314139519591, 6.7868442109830855, 5.2952870947334114, 5.6064597624296333, 5.4921097908102086, 6.1450202825415214, 6.3591021848005278, 5.4996866353350615, 5.6516820894310058, 5.7969983303071411, 5.8531227958031931, 5.2545492072097808, 6.0102701017450126, 5.5327493838092865, 5.7703034605336532, 5.0412624972468443, 5.2728662938897264, 5.0859211734722649, 5.5526426823734987, 5.8005720594546748, 5.7391426965165389, 5.5518538235632207, 5.8279562142168073, 5.9089508390885479, 5.9789908401877394, 6.5696153940105573]
@@ -623,8 +636,10 @@ def test():
     #     evaluate_models_on_training(evxar_lst[i], evyar_lst[i], generate_models(evxar_lst[i], 
     #                                                                             evyar_lst[i], [25]))
     # evaluate_models_on_training(evxar5, evyar5, generate_models(evxar5, evyar5, [19]))
-    # print(gen_std_devs(climate, ['SEATTLE'], years),gen_std_devs(climate, ['SEATTLE'], years)==correct)
-    
+    # print(gen_std_devs(climate, ['SEATTLE'], years), pylab.array(correct),gen_std_devs(climate, ['SEATTLE'], years)
+    #       - pylab.array(correct))
+    # print(gen_std_devs(climate, CITIES, TRAINING_INTERVAL))
+
 
 # if __name__ == '__main__':
 #     test()
@@ -667,12 +682,12 @@ if __name__ == '__main__':
     # evaluate_models_on_training(sample_years, mov_avg, train_mod)
     nat_avg_test = gen_cities_avg(sample_climate, CITIES, test_years)
     mov_avg_test = moving_average(nat_avg_test, 5)
-    evaluate_models_on_testing(test_years, mov_avg_test,train_mod)
+    # evaluate_models_on_testing(test_years, mov_avg_test,train_mod)
     
     
     # Part E
-    # std_dev = gen_std_devs(sample_climate, CITIES, sample_years)
-    # std_mov_avg = moving_average(std_dev, 5)
-    # std_mod = generate_models(sample_years, std_dev, [1])
-    # evaluate_models_on_training(sample_years, std_dev, std_mod)
+    std_dev = gen_std_devs(sample_climate, CITIES, sample_years)
+    std_mov_avg = moving_average(std_dev, 5)
+    std_mod = generate_models(sample_years, std_dev, [1])
+    evaluate_models_on_training(sample_years, std_dev, std_mod)
     
